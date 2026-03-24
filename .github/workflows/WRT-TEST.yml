@@ -18,11 +18,8 @@ on:
           - ROCKCHIP
           - X86
           - IPQ50XX-WIFI-YES
-          - IPQ50XX-WIFI-NO
           - IPQ60XX-WIFI-YES
-          - IPQ60XX-WIFI-NO
           - IPQ807X-WIFI-YES
-          - IPQ807X-WIFI-NO
           - TEST
       SOURCE:
         default: 'VIKINGYFY/immortalwrt'
