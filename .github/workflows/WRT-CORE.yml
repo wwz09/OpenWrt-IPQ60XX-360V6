@@ -217,7 +217,8 @@ jobs:
             for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
               EXT=$(basename $FILE | cut -d '.' -f 2-)
               NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
-              NEW_FILE="$WRT_INFO"-"$WRT_BRANCH"-"$WRT_WIFI"-"$NAME"-"$WRT_DATE"."$EXT"
+              # 简化固件命名，移除固定前缀
+              NEW_FILE="$WRT_TARGET-$WRT_BRANCH-$WRT_DATE"."$EXT"
               mv -f $FILE ./upload/$NEW_FILE
             done
 
