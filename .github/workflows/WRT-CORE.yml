@@ -216,10 +216,8 @@ jobs:
 
             for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
               EXT=$(basename $FILE | cut -d '.' -f 2-)
-              # 从文件名中提取设备名称（例如：glinet_gl-ax1800）
-              DEVICE_NAME=$(basename $FILE | cut -d '.' -f 1 | grep -oP "(?<=_)[a-z0-9_-]+(?=-\w+\.\w+)" || echo "unknown")
-              # 使用设备名称作为命名依据
-              NEW_FILE="$DEVICE_NAME-$WRT_BRANCH-$WRT_DATE"."$EXT"
+              NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
+              NEW_FILE="$NAME"-"$WRT_DATE"."$EXT"
               mv -f $FILE ./upload/$NEW_FILE
             done
 
