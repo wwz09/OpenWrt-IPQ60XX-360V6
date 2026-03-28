@@ -163,7 +163,7 @@ jobs:
           # 根据设备选择对应的配置文件
           case "${{ matrix.device }}" in
             jdcloud-re-ss-01)
-              CONFIG_FILE="$GITHUB_WORKSPACE/Config/jdcloud-re-ss-01.config"
+              CONFIG_FILE="$GITHUB_WORKSPACE/Config/jdc-ax1800.config"
               ;;
             qihoo-360v6)
               CONFIG_FILE="$GITHUB_WORKSPACE/Config/qihoo-360v6.config"
