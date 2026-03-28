@@ -118,7 +118,7 @@ main() {
     local patch_dir="$3"
     local backup_dir="$4"
     
-    # 应用内核缓存行组大小修复补丁（通用补丁，无论是否启用特定设备都需要应用）
+    # 应用内核缓存行组大小修复补丁（通用补丁，所有设备编译时都需要应用）
     local cacheline_patch="$patch_dir/002-fix-net-device-cacheline-group-size.patch"
     if [ -f "$cacheline_patch" ]; then
         apply_patch "$cacheline_patch" "$target_dir" "$backup_dir"
