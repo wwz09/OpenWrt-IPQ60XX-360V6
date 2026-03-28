@@ -118,7 +118,20 @@ main() {
     local patch_dir="$3"
     local backup_dir="$4"
     
-    # 检查是否需要应用补丁
+    # 应用内核缓存行组大小修复补丁（通用补丁，无论是否启用特定设备都需要应用）
+    local cacheline_patch="$patch_dir/002-fix-net-device-cacheline-group-size.patch"
+    if [ -f "$cacheline_patch" ]; then
+        apply_patch "$cacheline_patch" "$target_dir" "$backup_dir"
+        if [ $? -ne 0 ]; then
+            log_error "内核缓存行组大小补丁应用失败"
+            return 1
+        fi
+    else
+        log_error "内核缓存行组大小补丁文件不存在: $cacheline_patch"
+        return 1
+    fi
+    
+    # 检查是否需要应用 qihoo_360v6 特定补丁
     if check_patch_needed "$config_file" "qihoo_360v6"; then
         # 应用网络配置补丁
         local network_patch="$patch_dir/001-add-qihoo-360v6-network-config.patch"
@@ -133,23 +146,11 @@ main() {
             return 1
         fi
         
-        # 应用内核缓存行组大小修复补丁
-        local cacheline_patch="$patch_dir/002-fix-net-device-cacheline-group-size.patch"
-        if [ -f "$cacheline_patch" ]; then
-            apply_patch "$cacheline_patch" "$target_dir" "$backup_dir"
-            if [ $? -ne 0 ]; then
-                log_error "内核缓存行组大小补丁应用失败"
-                return 1
-            fi
-        else
-            log_error "内核缓存行组大小补丁文件不存在: $cacheline_patch"
-            return 1
-        fi
-        
         log_success "所有补丁应用成功"
         return 0
     else
-        log_info "不需要应用补丁"
+        log_info "不需要应用 qihoo_360v6 特定补丁"
+        log_success "内核缓存行组大小补丁应用成功"
         return 0
     fi
 }
