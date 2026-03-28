@@ -53,6 +53,13 @@ if [ -n "$WRT_PACKAGE" ]; then
 	echo -e "$WRT_PACKAGE" >> ./.config
 fi
 
+#修复luci-app-netspeedtest的python3-pkg-resources依赖问题
+NETSPEEDTEST_MK="./package/netspeedtest/luci-app-netspeedtest/Makefile"
+if [ -f "$NETSPEEDTEST_MK" ]; then
+	sed -i 's/python3-pkg-resources/python3-setuptools/g' $NETSPEEDTEST_MK
+	echo "netspeedtest python3-pkg-resources dependency has been fixed!"
+fi
+
 #高通平台调整
 DTS_PATH="./target/linux/qualcommax/dts/"
 if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
