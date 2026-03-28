@@ -38,12 +38,6 @@ echo "添加第三方软件源..."
 # 添加OpenClash插件
 echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
 
-# 添加额外的软件源以获取缺失的依赖
-echo "src-git packages https://github.com/openwrt/packages.git" >> feeds.conf.default
-echo "src-git luci https://github.com/openwrt/luci.git" >> feeds.conf.default
-echo "src-git routing https://github.com/openwrt/routing.git" >> feeds.conf.default
-echo "src-git telephony https://github.com/openwrt/telephony.git" >> feeds.conf.default
-
 echo "✓ 第三方软件源添加完成"
 
 # ==================== 修改默认主题 ====================
