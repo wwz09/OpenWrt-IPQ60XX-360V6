@@ -16,7 +16,7 @@ configure_network() {
     sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
     # 修改默认主题
     sed -i "s/luci-theme-bootstrap/luci-theme-$WRT_THEME/g" $(find ./feeds/luci/collections/ -type f -name "Makefile")
-    # 修改immortalwrt.lan关联IP
+    # 修改默认IP
     sed -i "s/192\.168\.[0-9]*\.[0-9]*/192.168.2.1/g" $(find ./feeds/luci/modules/luci-mod-system/ -type f -name "flash.js")
     # 添加编译日期标识
     # 生成有效的JavaScript代码，确保变量正确转义
@@ -74,16 +74,6 @@ configure_network() {
     # 高通平台调整
     DTS_PATH="./target/linux/qualcommax/dts/"
     if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
-        # 取消nss相关feed
-        echo "CONFIG_FEED_nss_packages=n" >> ./.config
-        echo "CONFIG_FEED_sqm_scripts_nss=n" >> ./.config
-        # 设置NSS版本
-        echo "CONFIG_NSS_FIRMWARE_VERSION_11_4=n" >> ./.config
-        if [[ "${WRT_CONFIG,,}" == *"ipq50"* ]]; then
-            echo "CONFIG_NSS_FIRMWARE_VERSION_12_2=y" >> ./.config
-        else
-            echo "CONFIG_NSS_FIRMWARE_VERSION_12_5=y" >> ./.config
-        fi
         # 无WIFI配置调整Q6大小
         if [[ "${WRT_CONFIG,,}" == *"wifi"* && "${WRT_CONFIG,,}" == *"no"* ]]; then
             echo "WRT_WIFI=wifi-no" >> $GITHUB_ENV

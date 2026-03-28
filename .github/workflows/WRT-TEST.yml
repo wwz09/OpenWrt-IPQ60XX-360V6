@@ -22,16 +22,17 @@ on:
           - IPQ807X-WIFI-YES
           - TEST
       SOURCE:
-        default: 'VIKINGYFY/immortalwrt'
+        default: 'coolsnowwolf/lede'
         required: true
         type: choice
         options:
+          - coolsnowwolf/lede
           - VIKINGYFY/immortalwrt
           - immortalwrt/immortalwrt
           - LiBwrt/openwrt-6.x
           - qosmio/openwrt-ipq
       BRANCH:
-        default: 'main'
+        default: 'master'
         required: true
         type: string
       PACKAGE:
