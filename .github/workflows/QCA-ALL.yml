@@ -11,6 +11,10 @@ on:
     workflows: ["Auto-Clean"]
     types:
       - completed
+  #代码推送触发
+  push:
+    branches:
+      - main
   #手动编译
   workflow_dispatch:
     inputs:
