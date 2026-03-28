@@ -7,6 +7,7 @@
 . "$(dirname "$0")/theme.sh"
 . "$(dirname "$0")/nss.sh"
 . "$(dirname "$0")/package_fixes.sh"
+. "$(dirname "$0")/patch.sh"
 
 # 主处理函数
 run_handlers() {

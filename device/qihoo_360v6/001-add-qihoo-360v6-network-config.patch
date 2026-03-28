@@ -1,0 +1,33 @@
+--- a/target/linux/qualcommax/ipq60xx/base-files/etc/board.d/02_network
++++ b/target/linux/qualcommax/ipq60xx/base-files/etc/board.d/02_network
+@@ -1,6 +1,7 @@
+ #
+ # Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ # Copyright (c) 2011-2015 OpenWrt.org
++# Copyright (c) 2026 VIKINGYFY
+ #
+ . /lib/functions/uci-defaults.sh
+ . /lib/functions/system.sh
+@@ -12,6 +13,14 @@
+ 		ucidef_set_interface_lan "eth0"
+ 		ucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:wan" "0@eth0"
+ 		;
++	qihoo,360v6)
++		ucidef_set_interface_wan "eth1"
++		ucidef_set_interface_lan "eth0"
++		ucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:wan" "0@eth0"
++		;
++	glinet,gl-ax1800|
++	xiaomi,ax1800)
++		ucidef_set_interface_wan "eth1"
++		ucidef_set_interface_lan "eth0"
++		ucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:wan" "0@eth0"
++		;
+ 	esac
+ }
+ 
+@@ -20,4 +29,3 @@
+ 	board_config_update
+ 	board=$(board_name)
+ 	board_config "$board"
+-
