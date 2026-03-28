@@ -108,12 +108,16 @@ if [ -d *"luci-app-netspeedtest"* ]; then
 	sed -i 's/ca-certificates/ca-bundle/g' ./speedtest-cli/Makefile
 
 	#修复python3-pkg-resources依赖问题，替换为python3-setuptools
-	if [ -f "./luci-app-netspeedtest/Makefile" ]; then
-		sed -i 's/python3-pkg-resources/python3-setuptools/g' ./luci-app-netspeedtest/Makefile
+	if [ -f "./Makefile" ]; then
+		sed -i 's/python3-pkg-resources/python3-setuptools/g' ./Makefile
 	fi
 	#同时检查并修复speedtest-cli的依赖
 	if [ -f "./speedtest-cli/Makefile" ]; then
 		sed -i 's/python3-pkg-resources/python3-setuptools/g' ./speedtest-cli/Makefile
+	fi
+	#检查并修复netspeedtest的依赖
+	if [ -f "./netspeedtest/Makefile" ]; then
+		sed -i 's/python3-pkg-resources/python3-setuptools/g' ./netspeedtest/Makefile
 	fi
 
 	cd $PKG_PATH && echo "netspeedtest has been fixed!"
