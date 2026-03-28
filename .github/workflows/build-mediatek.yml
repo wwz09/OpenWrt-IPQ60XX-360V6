@@ -58,8 +58,8 @@ env:
   TZ: Asia/Shanghai
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: configs/.config
-  DIY_P1_SH: scripts/diy-part1.sh
-  DIY_P2_SH: scripts/diy-part2.sh
+  DIY_P1_SH: Scripts/diy-part1.sh
+  DIY_P2_SH: Scripts/diy-part2.sh
 
 jobs:
   # 准备阶段 - 检出代码
