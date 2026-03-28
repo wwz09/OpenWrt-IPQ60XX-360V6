@@ -48,7 +48,9 @@ env:
   # 源码分支
   REPO_BRANCH: main-nss
   # 第三方插件仓库
-  PACKAGE_URL: https://github.com/kenzok8/jell
+  PACKAGE_URL: https://github.com/kenzok8/openwrt-packages
+  # 依赖包仓库
+  DEPENDENCY_URL: https://github.com/kenzok8/jell
   # 固件发布配置
   RELEASE_TAG: MEDIATEK-AutoBuild-${{ github.run_number }}
   RELEASE_NAME: MediaTek 自动编译固件 ${{ github.run_number }}
@@ -130,7 +132,8 @@ jobs:
         run: |
           cd openwrt
           # 添加第三方插件仓库到feeds
-          echo "src-git jell ${{ env.PACKAGE_URL }}" >> feeds.conf.default
+          echo "src-git kenzo ${{ env.PACKAGE_URL }}" >> feeds.conf.default
+          echo "src-git jell ${{ env.DEPENDENCY_URL }}" >> feeds.conf.default
           # 显示feeds配置
           cat feeds.conf.default
 
