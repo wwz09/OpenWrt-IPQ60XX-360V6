@@ -159,8 +159,8 @@ jobs:
         run: |
           cd ./wrt/package/
 
-          $GITHUB_WORKSPACE/scripts/main.sh packages "$WRT_TARGET" "$WRT_CONFIG"
-          $GITHUB_WORKSPACE/scripts/main.sh handlers "$GITHUB_WORKSPACE/wrt/package/"
+          ../scripts/main.sh packages "$WRT_TARGET" "$WRT_CONFIG"
+          ../scripts/main.sh handlers "../wrt/package/"
 
       - name: Custom Settings
         run: |
@@ -172,7 +172,7 @@ jobs:
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
           fi
 
-          $GITHUB_WORKSPACE/scripts/main.sh settings "$WRT_THEME" "$WRT_MARK" "$WRT_DATE" "$WRT_NAME" "$WRT_PACKAGE" "$WRT_TARGET" "$WRT_CONFIG"
+          ../scripts/main.sh settings "$WRT_THEME" "$WRT_MARK" "$WRT_DATE" "$WRT_NAME" "$WRT_PACKAGE" "$WRT_TARGET" "$WRT_CONFIG"
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
@@ -190,7 +190,7 @@ jobs:
           mkdir -p "$BACKUP_DIR"
 
           # 执行补丁应用
-          $GITHUB_WORKSPACE/scripts/handlers/patch.sh "$CONFIG_FILE" "$TARGET_DIR" "$PATCH_DIR" "$BACKUP_DIR"
+          ../scripts/handlers/patch.sh "$CONFIG_FILE" "$TARGET_DIR" "$PATCH_DIR" "$BACKUP_DIR"
 
           # 复制设备树文件
           if grep -q "CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_DEVICE_qihoo_360v6=y" "$CONFIG_FILE"; then
