@@ -122,7 +122,7 @@ cat > package/base-files/files/etc/banner << 'EOF'
   编译时间: $(date '+%Y-%m-%d %H:%M:%S')
   源码仓库: LiBwrt/openwrt-6.x
   插件仓库: kenzok8/openwrt-packages
-  依赖仓库: kenzok8/jell
+  依赖仓库: wwz09/QCA-Package
  -----------------------------------------------------
 EOF
 echo "✓ Banner修改完成"
@@ -151,7 +151,7 @@ cat > package/base-files/files/etc/motd << 'EOF'
 技术支持:
   - 源码: https://github.com/LiBwrt/openwrt-6.x
   - 插件: https://github.com/kenzok8/openwrt-packages
-  - 依赖: https://github.com/kenzok8/jell
+  - 依赖: https://github.com/wwz09/QCA-Package
 
 EOF
 echo "✓ motd添加完成"

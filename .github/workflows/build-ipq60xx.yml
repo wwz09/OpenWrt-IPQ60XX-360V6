@@ -294,7 +294,7 @@ jobs:
           编译时间: $(date '+%Y-%m-%d %H:%M:%S')
           源码仓库: LiBwrt/openwrt-6.x
           插件仓库: kenzok8/openwrt-packages
-          依赖仓库: kenzok8/jell
+          依赖仓库: wwz09/QCA-Package
           
           支持的设备:
           - JDCLOUD RE-SS-01
@@ -335,7 +335,7 @@ jobs:
             - **编译时间**: ${{ github.event.repository.updated_at }}
             - **源码仓库**: [LiBwrt/openwrt-6.x](https://github.com/LiBwrt/openwrt-6.x)
             - **插件仓库**: [kenzok8/openwrt-packages](https://github.com/kenzok8/openwrt-packages)
-            - **依赖仓库**: [kenzok8/jell](https://github.com/kenzok8/jell)
+            - **依赖仓库**: [wwz09/QCA-Package](https://github.com/wwz09/QCA-Package)
             - **工作流运行**: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             
             ### 支持的设备
