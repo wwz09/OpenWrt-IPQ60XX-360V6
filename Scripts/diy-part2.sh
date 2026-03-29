@@ -82,11 +82,44 @@ echo "✓ WiFi配置完成"
 
 # ==================== 修改网络配置 ====================
 echo "修改网络配置..."
-if [ -f "package/base-files/files/etc/config/network" ]; then
-    # 修改LAN口IP
-    sed -i 's/192.168.1.1/192.168.1.1/g' package/base-files/files/etc/config/network
-    echo "✓ 网络配置修改完成"
-fi
+# 创建网络配置目录
+mkdir -p package/base-files/files/etc/config
+# 创建网络配置文件，添加IPv6支持
+cat > package/base-files/files/etc/config/network << 'EOF'
+config interface 'loopback'
+    option device 'lo'
+    option proto 'static'
+    option ipaddr '127.0.0.1'
+    option netmask '255.0.0.0'
+
+config globals 'globals'
+    option ula_prefix 'auto'
+
+config interface 'lan'
+    option device 'br-lan'
+    option proto 'static'
+    option ipaddr '192.168.1.1'
+    option netmask '255.255.255.0'
+    option ip6assign '60'
+
+config interface 'wan'
+    option device 'eth0'
+    option proto 'dhcp'
+    option ipv6 'auto'
+
+config interface 'wan6'
+    option device 'eth0'
+    option proto 'dhcpv6'
+
+config device
+    option name 'br-lan'
+    option type 'bridge'
+    list ports 'eth1'
+    list ports 'eth2'
+    list ports 'eth3'
+    list ports 'eth4'
+EOF
+echo "✓ 网络配置修改完成，已添加IPv6支持"
 
 # ==================== 添加自定义启动脚本 ====================
 echo "添加自定义启动脚本..."
@@ -188,13 +221,23 @@ echo "✓ 定时任务添加完成"
 echo "优化系统参数..."
 mkdir -p package/base-files/files/etc/sysctl.d
 cat > package/base-files/files/etc/sysctl.d/99-custom.conf << 'EOF'
-# 网络优化
+# 网络优化 (IPv4)
 net.core.rmem_max = 16777216
 net.core.wmem_max = 16777216
 net.ipv4.tcp_rmem = 4096 87380 16777216
 net.ipv4.tcp_wmem = 4096 65536 16777216
 net.ipv4.tcp_congestion_control = bbr
 net.core.default_qdisc = fq
+
+# 网络优化 (IPv6)
+net.ipv6.conf.all.forwarding = 1
+net.ipv6.conf.default.forwarding = 1
+net.ipv6.conf.all.accept_ra = 2
+net.ipv6.conf.default.accept_ra = 2
+net.ipv6.conf.all.autoconf = 1
+net.ipv6.conf.default.autoconf = 1
+net.ipv6.conf.all.max_addresses = 16
+net.ipv6.conf.default.max_addresses = 16
 
 # 文件描述符限制
 fs.file-max = 65535
@@ -204,7 +247,7 @@ vm.swappiness = 10
 vm.dirty_ratio = 15
 vm.dirty_background_ratio = 5
 EOF
-echo "✓ 系统参数优化完成"
+echo "✓ 系统参数优化完成，已添加IPv6支持"
 
 # ==================== 添加自定义防火墙规则 ====================
 echo "添加自定义防火墙规则..."
@@ -213,24 +256,41 @@ cat > package/base-files/files/etc/firewall.user << 'EOF'
 # 自定义防火墙规则
 # 作者: 李杰
 
-# 允许ICMP ping
+# 允许ICMP ping (IPv4)
 iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
 
-# 允许本地回环
+# 允许ICMPv6 (IPv6)
+ip6tables -A INPUT -p icmpv6 -j ACCEPT
+ip6tables -A OUTPUT -p icmpv6 -j ACCEPT
+
+# 允许本地回环 (IPv4)
 iptables -A INPUT -i lo -j ACCEPT
 
-# 允许已建立的连接
+# 允许本地回环 (IPv6)
+ip6tables -A INPUT -i lo -j ACCEPT
+
+# 允许已建立的连接 (IPv4)
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# 允许SSH访问
+# 允许已建立的连接 (IPv6)
+ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# 允许SSH访问 (IPv4)
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
-# 允许HTTP/HTTPS访问
+# 允许SSH访问 (IPv6)
+ip6tables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# 允许HTTP/HTTPS访问 (IPv4)
 iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# 允许HTTP/HTTPS访问 (IPv6)
+ip6tables -A INPUT -p tcp --dport 80 -j ACCEPT
+ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
 EOF
-echo "✓ 防火墙规则添加完成"
+echo "✓ 防火墙规则添加完成，已添加IPv6支持"
 
 # ==================== 处理依赖缺失问题 ====================
 echo "处理依赖缺失问题..."
