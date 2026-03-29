@@ -98,7 +98,7 @@ config globals 'globals'
 config interface 'lan'
     option device 'br-lan'
     option proto 'static'
-    option ipaddr '192.168.1.1'
+    option ipaddr '192.168.100.1'
     option netmask '255.255.255.0'
     option ip6assign '60'
 
@@ -169,7 +169,7 @@ cat > package/base-files/files/etc/motd << 'EOF'
 
 系统信息:
   - 固件版本: OpenWrt AutoBuild
-  - 默认IP: 192.168.1.1
+  - 默认IP: 192.168.100.1
   - 默认密码: password
   - 默认WiFi: OpenWrt-2.4G / OpenWrt-5G
   - WiFi密码: 12345678
