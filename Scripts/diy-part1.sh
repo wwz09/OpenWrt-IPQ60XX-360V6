@@ -60,7 +60,7 @@ echo "添加自定义软件包..."
 
 # 克隆主题
 [ -d "package/luci-theme-argon" ] && rm -rf package/luci-theme-argon
-git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
+git clone -b master https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
 echo "✓ Argon主题克隆完成"
 
 # 克隆Argon配置
