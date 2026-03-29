@@ -53,7 +53,7 @@ env:
   # 第三方插件仓库
   PACKAGE_URL: https://github.com/kenzok8/openwrt-packages
   # 依赖包仓库
-  DEPENDENCY_URL: https://github.com/kenzok8/jell
+  DEPENDENCY_URL: https://github.com/wwz09/QCA-Package
   # 固件发布配置
   RELEASE_TAG: IPQ60XX-AutoBuild-${{ github.run_number }}
   RELEASE_NAME: IPQ60XX 自动编译固件 ${{ github.run_number }}
