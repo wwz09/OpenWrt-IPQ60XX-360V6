@@ -68,6 +68,31 @@ echo "✓ Argon主题克隆完成"
 git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
 echo "✓ Argon配置克隆完成"
 
+# 克隆Design主题
+[ -d "package/luci-theme-design" ] && rm -rf package/luci-theme-design
+git clone https://github.com/gngpp/luci-theme-design.git package/luci-theme-design
+echo "✓ Design主题克隆完成"
+
+# 克隆Design配置
+[ -d "package/luci-app-design-config" ] && rm -rf package/luci-app-design-config
+git clone https://github.com/gngpp/luci-app-design-config.git package/luci-app-design-config
+echo "✓ Design配置克隆完成"
+
+# 克隆Aurora主题
+[ -d "package/luci-theme-aurora" ] && rm -rf package/luci-theme-aurora
+git clone https://github.com/thinktip/luci-theme-aurora.git package/luci-theme-aurora
+echo "✓ Aurora主题克隆完成"
+
+# 克隆Aurora配置
+[ -d "package/luci-app-aurora-config" ] && rm -rf package/luci-app-aurora-config
+git clone https://github.com/thinktip/luci-app-aurora-config.git package/luci-app-aurora-config
+echo "✓ Aurora配置克隆完成"
+
+# 克隆应用市场
+[ -d "package/luci-app-store" ] && rm -rf package/luci-app-store
+git clone https://github.com/linkease/luci-app-store.git package/luci-app-store
+echo "✓ 应用市场克隆完成"
+
 echo "============================================"
 echo "DIY Part 1 脚本执行完成"
 echo "============================================"
