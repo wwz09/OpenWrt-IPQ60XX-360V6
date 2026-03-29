@@ -88,6 +88,16 @@ echo "✓ Aurora主题克隆完成"
 git clone https://github.com/thinktip/luci-app-aurora-config.git package/luci-app-aurora-config
 echo "✓ Aurora配置克隆完成"
 
+# 克隆Netgear主题
+[ -d "package/luci-theme-netgear" ] && rm -rf package/luci-theme-netgear
+git clone https://github.com/sirpdboy/luci-theme-netgear.git package/luci-theme-netgear
+echo "✓ Netgear主题克隆完成"
+
+# 克隆Material主题
+[ -d "package/luci-theme-material" ] && rm -rf package/luci-theme-material
+git clone https://github.com/LuttyYang/luci-theme-material.git package/luci-theme-material
+echo "✓ Material主题克隆完成"
+
 # 克隆应用市场
 [ -d "package/luci-app-store" ] && rm -rf package/luci-app-store
 git clone https://github.com/linkease/luci-app-store.git package/luci-app-store
