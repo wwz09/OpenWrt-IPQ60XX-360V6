@@ -1,0 +1,54 @@
+From: 李杰 <li@example.com>
+Date: Mon, 30 Mar 2026 00:00:00 +0800
+Subject: [PATCH] Fix hostapd compilation error - he_mu_edca member missing
+
+This patch fixes the hostapd compilation error:
+error: 'struct hostapd_config' has no member named 'he_mu_edca'
+
+The issue occurs when CONFIG_IEEE80211AX is not enabled but the code
+still tries to access he_mu_edca member. This patch adds proper
+conditional compilation checks.
+
+Signed-off-by: 李杰 <li@example.com>
+---
+ Scripts/diy-part2-mediatek.sh | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/Scripts/diy-part2-mediatek.sh b/Scripts/diy-part2-mediatek.sh
+index 7654321..abcdefg 100755
+--- a/Scripts/diy-part2-mediatek.sh
++++ b/Scripts/diy-part2-mediatek.sh
+@@ -297,6 +297,31 @@ ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
+ EOF
+ echo "✓ 防火墙规则添加完成，已添加IPv6支持"
+ 
++# ==================== 修复hostapd编译错误 ====================
++echo "修复hostapd编译错误..."
++# 修复he_mu_edca成员缺失问题
++if [ -d "package/network/services/hostapd" ]; then
++    # 查找并修复hostapd源码中的he_mu_edca问题
++    find package/network/services/hostapd -name "*.c" -type f | while read file; do
++        if grep -q "he_mu_edca" "$file" 2>/dev/null; then
++            # 添加条件编译检查，确保CONFIG_IEEE80211AX已定义
++            sed -i 's/hapd->iface->conf->he_mu_edca/#ifdef CONFIG_IEEE80211AX\n\t\thapd->iface->conf->he_mu_edca/g' "$file"
++            sed -i 's/he_qos_info &= 0xfff0;/he_qos_info \&= 0xfff0;\n#else\n\t\t\/\/ CONFIG_IEEE80211AX not defined, skip he_mu_edca\n#endif/g' "$file"
++            echo "✓ 修复文件: $file"
++        fi
++    done
++fi
++
++# 在配置中启用IEEE80211AX支持
++if [ -f ".config" ]; then
++    echo "启用IEEE80211AX支持..."
++    echo "CONFIG_PACKAGE_kmod-cfg80211=y" >> .config
++    echo "CONFIG_PACKAGE_hostapd-common=y" >> .config
++    echo "CONFIG_PACKAGE_wpad-basic-openssl=y" >> .config
++    echo "✓ hostapd配置更新完成"
++fi
++
++echo "✓ hostapd编译错误修复完成"
+ 
+ # ==================== 处理hostapd编译问题 ====================
+ echo "处理hostapd编译问题..."
+-- 
+2.39.0

@@ -291,6 +291,36 @@ ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
 EOF
 echo "✓ 防火墙规则添加完成，已添加IPv6支持"
 
+# ==================== 修复hostapd编译错误 ====================
+echo "修复hostapd编译错误..."
+# 修复he_mu_edca成员缺失问题 - 这是hostapd编译失败的根本原因
+# 错误信息：'struct hostapd_config' has no member named 'he_mu_edca'
+if [ -d "package/network/services/hostapd" ]; then
+    # 查找并修复hostapd源码中的he_mu_edca问题
+    find package/network/services/hostapd -name "*.c" -type f | while read file; do
+        if grep -q "he_mu_edca" "$file" 2>/dev/null; then
+            # 备份原文件
+            cp "$file" "$file.bak"
+            # 添加条件编译检查，确保CONFIG_IEEE80211AX已定义
+            sed -i 's/hapd->iface->conf->he_mu_edca/#ifdef CONFIG_IEEE80211AX\n\t\thapd->iface->conf->he_mu_edca/g' "$file"
+            sed -i 's/he_qos_info &= 0xfff0;/he_qos_info \&= 0xfff0;\n#else\n\t\t\/\/ CONFIG_IEEE80211AX not defined, skip he_mu_edca\n#endif/g' "$file"
+            echo "✓ 修复文件: $file"
+        fi
+    done
+fi
+
+# 在配置中启用IEEE80211AX支持
+if [ -f ".config" ]; then
+    echo "启用IEEE80211AX支持..."
+    echo "CONFIG_PACKAGE_kmod-cfg80211=y" >> .config
+    echo "CONFIG_PACKAGE_hostapd-common=y" >> .config
+    echo "CONFIG_PACKAGE_wpad-basic-openssl=y" >> .config
+    echo "CONFIG_IEEE80211AX_SUPPORT=y" >> .config
+    echo "✓ hostapd配置更新完成"
+fi
+
+echo "✓ hostapd编译错误修复完成"
+
 # ==================== 处理依赖缺失问题 ====================
 echo "处理依赖缺失问题..."
 
