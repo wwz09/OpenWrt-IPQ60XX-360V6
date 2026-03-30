@@ -1,0 +1,154 @@
+From: 李杰 <li@example.com>
+Date: Mon, 30 Mar 2026 00:00:00 +0800
+Subject: [PATCH] Fix compilation issues for MediaTek platform
+
+This patch fixes several compilation issues for the MediaTek platform:
+
+1. Fix dependency repository configuration to avoid duplicate entries
+2. Clean up conflicting packages and unnecessary plugins
+3. Correct network configuration to match MediaTek hardware
+4. Optimize dependency handling to reduce missing dependency warnings
+5. Ensure code follows project coding standards
+
+Signed-off-by: 李杰 <li@example.com>
+---
+ Config/cmcc-rax3000m.config | 13 +++++++------
+ Scripts/diy-part1-mediatek.sh | 10 +++++++++-
+ Scripts/diy-part2-mediatek.sh | 31 ++++++++++++++++++++++++++-----
+ 3 files changed, 41 insertions(+), 13 deletions(-)
+
+diff --git a/Config/cmcc-rax3000m.config b/Config/cmcc-rax3000m.config
+index 1234567..89abcde 100644
+--- a/Config/cmcc-rax3000m.config
++++ b/Config/cmcc-rax3000m.config
+@@ -39,18 +39,19 @@ CONFIG_PACKAGE_luci-app-sysinfo=y
+ CONFIG_PACKAGE_luci-app-autoreboot=y
+ 
+ # 第三方插件
+ CONFIG_PACKAGE_luci-app-argon-config=y
+-CONFIG_PACKAGE_luci-app-cpufreq=y
+ CONFIG_PACKAGE_luci-app-ttyd=y
+ CONFIG_PACKAGE_luci-app-samba4=y
+ CONFIG_PACKAGE_luci-app-vlmcsd=y
+ CONFIG_PACKAGE_luci-app-autoreboot=y
+ CONFIG_PACKAGE_luci-app-control-weburl=y
+-CONFIG_PACKAGE_luci-app-control-timewol=y
+ CONFIG_PACKAGE_luci-app-diskman=y
+ CONFIG_PACKAGE_luci-app-lucky=y
+ CONFIG_PACKAGE_luci-app-parentcontrol=y
+ CONFIG_PACKAGE_luci-app-homeproxy=y
+-CONFIG_PACKAGE_luci-app-oaf=y
+ CONFIG_PACKAGE_luci-app-sqm=y
+ CONFIG_PACKAGE_ariang=y
++CONFIG_PACKAGE_luci-app-design-config=y
++CONFIG_PACKAGE_luci-app-aurora-config=y
++CONFIG_PACKAGE_luci-app-store=y
++
+diff --git a/Scripts/diy-part1-mediatek.sh b/Scripts/diy-part1-mediatek.sh
+index 1234567..89abcde 100755
+--- a/Scripts/diy-part1-mediatek.sh
++++ b/Scripts/diy-part1-mediatek.sh
+@@ -35,10 +35,18 @@ if [ -f "package/lean/default-settings/files/zzz-default-settings" ]; then
+     echo "✓ 时区设置完成"
+ fi
+ 
+-# ==================== 添加第三方软件源 ====================
+-echo "添加第三方软件源..."
+-
+-# 添加OpenClash插件
+-echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
++# ==================== 添加第三方软件源 ====================
++echo "添加第三方软件源..."
++
++# 检查并添加OpenClash插件（避免重复）
++if ! grep -q "openclash" feeds.conf.default; then
++    echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
++    echo "✓ OpenClash插件源添加完成"
++else
++    echo "✓ OpenClash插件源已存在"
++fi
++
+ echo "✓ 第三方软件源添加完成"
+ 
+ # ==================== 修改默认主题 ====================
+diff --git a/Scripts/diy-part2-mediatek.sh b/Scripts/diy-part2-mediatek.sh
+index 1234567..89abcde 100755
+--- a/Scripts/diy-part2-mediatek.sh
++++ b/Scripts/diy-part2-mediatek.sh
+@@ -88,21 +88,24 @@ cat > package/base-files/files/etc/config/network << 'EOF'
+ config interface 'loopback'
+     option device 'lo'
+     option proto 'static'
+     option ipaddr '127.0.0.1'
+     option netmask '255.0.0.0'
+ 
+ config globals 'globals'
+     option ula_prefix 'auto'
+ 
+ config interface 'lan'
+     option device 'br-lan'
+     option proto 'static'
+     option ipaddr '192.168.100.1'
+     option netmask '255.255.255.0'
+     option ip6assign '60'
+ 
+ config interface 'wan'
+-    option device 'eth0'
++    option device 'wan'
+     option proto 'dhcp'
+     option ipv6 'auto'
+ 
+ config interface 'wan6'
+-    option device 'eth0'
++    option device 'wan'
+     option proto 'dhcpv6'
+ 
+ config device
+     option name 'br-lan'
+     option type 'bridge'
+-    list ports 'eth1'
+-    list ports 'eth2'
+-    list ports 'eth3'
+-    list ports 'eth4'
++    list ports 'lan1'
++    list ports 'lan2'
++    list ports 'lan3'
++    list ports 'lan4'
+ EOF
+ echo "✓ 网络配置修改完成，已添加IPv6支持"
+ 
+@@ -294,10 +297,24 @@ ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
+ EOF
+ echo "✓ 防火墙规则添加完成，已添加IPv6支持"
+ 
+-# ==================== 处理依赖缺失问题 ====================
+-echo "处理依赖缺失问题..."
+-# 尝试安装一些可能缺失的依赖包
+-echo "尝试安装缺失的依赖包..."
+-# 这里可以添加一些具体的依赖包安装命令
+-echo "✓ 依赖处理完成"
++# ==================== 处理依赖缺失问题 ====================
++echo "处理依赖缺失问题..."
++
++# 清理可能导致冲突的包
++echo "清理冲突包..."
++find package -name "luci-app-oaf" -type d | xargs rm -rf 2>/dev/null
++find package -name "luci-app-control-timewol" -type d | xargs rm -rf 2>/dev/null
++find package -name "luci-app-cpufreq" -type d | xargs rm -rf 2>/dev/null
++echo "✓ 冲突包清理完成"
++
++# 优化feeds配置，避免重复
++echo "优化feeds配置..."
++if [ -f "feeds.conf.default" ]; then
++    # 移除重复的feeds
++    awk '!seen[$0]++' feeds.conf.default > feeds.conf.default.tmp && mv feeds.conf.default.tmp feeds.conf.default
++    echo "✓ feeds配置优化完成"
++fi
++
++echo "✓ 依赖处理完成"
+ 
+ echo "============================================"
+ echo "MediaTek DIY Part 2 脚本执行完成"
+ echo "============================================"
+-- 
+2.39.0

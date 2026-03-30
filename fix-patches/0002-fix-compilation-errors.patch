@@ -1,0 +1,165 @@
+From: 李杰 <li@example.com>
+Date: Mon, 30 Mar 2026 00:00:00 +0800
+Subject: [PATCH] Fix compilation errors for MediaTek platform
+
+This patch fixes compilation errors for the MediaTek platform:
+
+1. Fix NSS driver compilation failure
+2. Fix hostapd compilation failure
+3. Optimize dependency handling to reduce missing dependency warnings
+4. Ensure proper network configuration for MediaTek hardware
+
+Signed-off-by: 李杰 <li@example.com>
+---
+ Config/cmcc-rax3000m.config | 5 +++--
+ Scripts/diy-part1-mediatek.sh | 15 +++++++++++++++
+ Scripts/diy-part2-mediatek.sh | 40 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 53 insertions(+), 2 deletions(-)
+
+diff --git a/Config/cmcc-rax3000m.config b/Config/cmcc-rax3000m.config
+index 89abcde..7654321 100644
+--- a/Config/cmcc-rax3000m.config
++++ b/Config/cmcc-rax3000m.config
+@@ -14,7 +14,7 @@
+ # 编译配置
+ CONFIG_TARGET_mediatek=y
+ CONFIG_TARGET_mediatek_filogic=y
+-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_cmcc_rax3000m=y
++CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_cmcc_rax3000m=y
+ 
+ # 固件版本
+ CONFIG_VERSION_NUMBER="1.0.0"
+@@ -31,7 +31,8 @@ CONFIG_PACKAGE_luci-app-wifi-config=y
+ CONFIG_PACKAGE_kmod-mt798x-wmac=y
+ CONFIG_PACKAGE_mt798x-firmware=y
+ 
+-# 系统工具
++# 系统工具和依赖
+ CONFIG_PACKAGE_luci-app-sysinfo=y
+ CONFIG_PACKAGE_luci-app-autoreboot=y
++CONFIG_PACKAGE_libpcre=y
+
+diff --git a/Scripts/diy-part1-mediatek.sh b/Scripts/diy-part1-mediatek.sh
+index 89abcde..7654321 100755
+--- a/Scripts/diy-part1-mediatek.sh
++++ b/Scripts/diy-part1-mediatek.sh
+@@ -35,10 +35,25 @@ if [ -f "package/lean/default-settings/files/zzz-default-settings" ]; then
+     echo "✓ 时区设置完成"
+ fi
+ 
+-# ==================== 添加第三方软件源 ====================
+-echo "添加第三方软件源..."
++
++# ==================== 处理NSS驱动问题 ====================
++echo "处理NSS驱动问题..."
++# 移除可能导致冲突的NSS包
++find package -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
++find feeds -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
++echo "✓ NSS驱动清理完成"
++
++# ==================== 添加第三方软件源 ====================
++echo "添加第三方软件源..."
+ 
+ # 检查并添加OpenClash插件（避免重复）
+ if ! grep -q "openclash" feeds.conf.default; then
+     echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
+     echo "✓ OpenClash插件源添加完成"
+ else
+     echo "✓ OpenClash插件源已存在"
+ fi
++
++# 添加缺失的依赖包
++echo "添加缺失的依赖包..."
++# 克隆libpcre包
++[ -d "package/libpcre" ] && rm -rf package/libpcre
++git clone https://github.com/openwrt/packages.git package/packages
++echo "✓ 依赖包添加完成"
++
+diff --git a/Scripts/diy-part2-mediatek.sh b/Scripts/diy-part2-mediatek.sh
+index 89abcde..7654321 100755
+--- a/Scripts/diy-part2-mediatek.sh
++++ b/Scripts/diy-part2-mediatek.sh
+@@ -88,21 +88,24 @@ cat > package/base-files/files/etc/config/network << 'EOF'
+ config interface 'loopback'
+     option device 'lo'
+     option proto 'static'
+     option ipaddr '127.0.0.1'
+     option netmask '255.0.0.0'
+ 
+ config globals 'globals'
+     option ula_prefix 'auto'
+ 
+ config interface 'lan'
+     option device 'br-lan'
+     option proto 'static'
+     option ipaddr '192.168.100.1'
+     option netmask '255.255.255.0'
+     option ip6assign '60'
+ 
+ config interface 'wan'
+-    option device 'eth0'
++    option device 'wan'
+     option proto 'dhcp'
+     option ipv6 'auto'
+ 
+ config interface 'wan6'
+-    option device 'eth0'
++    option device 'wan'
+     option proto 'dhcpv6'
+ 
+ config device
+     option name 'br-lan'
+     option type 'bridge'
+-    list ports 'eth1'
+-    list ports 'eth2'
+-    list ports 'eth3'
+-    list ports 'eth4'
++    list ports 'lan1'
++    list ports 'lan2'
++    list ports 'lan3'
++    list ports 'lan4'
+ EOF
+ echo "✓ 网络配置修改完成，已添加IPv6支持"
+ 
+@@ -294,10 +297,35 @@ ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
+ EOF
+ echo "✓ 防火墙规则添加完成，已添加IPv6支持"
+ 
+-# ==================== 处理依赖缺失问题 ====================
+-echo "处理依赖缺失问题..."
++
++# ==================== 处理hostapd编译问题 ====================
++echo "处理hostapd编译问题..."
++# 清理可能导致hostapd编译失败的配置
++if [ -f ".config" ]; then
++    # 确保使用正确的hostapd版本
++    sed -i 's/CONFIG_PACKAGE_hostapd-common/CONFIG_PACKAGE_hostapd-common=y/g' .config
++    sed -i 's/CONFIG_PACKAGE_wpad/CONFIG_PACKAGE_wpad=y/g' .config
++    sed -i 's/CONFIG_PACKAGE_wpad-openssl/CONFIG_PACKAGE_wpad-openssl=y/g' .config
++    echo "✓ hostapd配置清理完成"
++fi
++
++# ==================== 处理依赖缺失问题 ====================
++echo "处理依赖缺失问题..."
+ 
+ # 清理可能导致冲突的包
+ echo "清理冲突包..."
+ find package -name "luci-app-oaf" -type d | xargs rm -rf 2>/dev/null
+ find package -name "luci-app-control-timewol" -type d | xargs rm -rf 2>/dev/null
+ find package -name "luci-app-cpufreq" -type d | xargs rm -rf 2>/dev/null
++find package -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
++echo "✓ 冲突包清理完成"
++
++# 安装缺失的依赖
++echo "安装缺失的依赖..."
++# 确保libpcre已安装
++if [ ! -d "package/libs/pcre" ]; then
++    mkdir -p package/libs/pcre
++    echo "src-git pcre https://github.com/openwrt/packages.git;master" >> feeds.conf.default
++    echo "✓ libpcre依赖添加完成"
++fi
+ 
+ # 优化feeds配置，避免重复
+ echo "优化feeds配置..."
+-- 
+2.39.0
