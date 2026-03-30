@@ -41,10 +41,8 @@
    - 点击 "Run workflow"
    - 选择要编译的设备
    - 点击 "Run workflow" 开始编译
-
 2. **定时编译**
    - 系统会每周日凌晨3点自动编译所有设备固件
-
 3. **代码推送触发**
    - 修改 `configs/`、`.github/workflows/` 或 `scripts/` 目录下的文件时，会自动触发编译
 
@@ -76,19 +74,16 @@ sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bis
    git clone --depth 1 https://github.com/LiBwrt/openwrt-6.x.git -b main-nss openwrt
    cd openwrt
    ```
-
 2. **添加插件仓库**
    ```bash
    echo "src-git kenzo https://github.com/kenzok8/openwrt-packages" >> feeds.conf.default
    echo "src-git jell https://github.com/kenzok8/jell" >> feeds.conf.default
    ```
-
 3. **更新并安装feeds**
    ```bash
    ./scripts/feeds update -a
    ./scripts/feeds install -a
    ```
-
 4. **执行DIY脚本**
    ```bash
    chmod +x ../scripts/diy-part1.sh
@@ -96,17 +91,14 @@ sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bis
    ../scripts/diy-part1.sh
    ../scripts/diy-part2.sh
    ```
-
 5. **配置编译选项**
    ```bash
    make menuconfig
    ```
-
 6. **下载依赖**
    ```bash
    make download -j8
    ```
-
 7. **开始编译**
    ```bash
    make -j$(nproc) V=s
@@ -132,7 +124,6 @@ sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bis
 
 ## 作者
 
-- **作者**: 李杰
 - **GitHub**: [wwz09](https://github.com/wwz09)
 
 ## 免责声明

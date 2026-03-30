@@ -35,8 +35,13 @@ fi
 # ==================== 添加第三方软件源 ====================
 echo "添加第三方软件源..."
 
-# 添加OpenClash插件
-echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
+# 检查并添加OpenClash插件（避免重复）
+if ! grep -q "openclash" feeds.conf.default; then
+    echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
+    echo "✓ OpenClash插件源添加完成"
+else
+    echo "✓ OpenClash插件源已存在"
+fi
 
 echo "✓ 第三方软件源添加完成"
 

@@ -103,21 +103,21 @@ config interface 'lan'
     option ip6assign '60'
 
 config interface 'wan'
-    option device 'eth0'
+    option device 'wan'
     option proto 'dhcp'
     option ipv6 'auto'
 
 config interface 'wan6'
-    option device 'eth0'
+    option device 'wan'
     option proto 'dhcpv6'
 
 config device
     option name 'br-lan'
     option type 'bridge'
-    list ports 'eth1'
-    list ports 'eth2'
-    list ports 'eth3'
-    list ports 'eth4'
+    list ports 'lan1'
+    list ports 'lan2'
+    list ports 'lan3'
+    list ports 'lan4'
 EOF
 echo "✓ 网络配置修改完成，已添加IPv6支持"
 
@@ -293,9 +293,22 @@ echo "✓ 防火墙规则添加完成，已添加IPv6支持"
 
 # ==================== 处理依赖缺失问题 ====================
 echo "处理依赖缺失问题..."
-# 尝试安装一些可能缺失的依赖包
-echo "尝试安装缺失的依赖包..."
-# 这里可以添加一些具体的依赖包安装命令
+
+# 清理可能导致冲突的包
+echo "清理冲突包..."
+find package -name "luci-app-oaf" -type d | xargs rm -rf 2>/dev/null
+find package -name "luci-app-control-timewol" -type d | xargs rm -rf 2>/dev/null
+find package -name "luci-app-cpufreq" -type d | xargs rm -rf 2>/dev/null
+echo "✓ 冲突包清理完成"
+
+# 优化feeds配置，避免重复
+echo "优化feeds配置..."
+if [ -f "feeds.conf.default" ]; then
+    # 移除重复的feeds
+    awk '!seen[$0]++' feeds.conf.default > feeds.conf.default.tmp && mv feeds.conf.default.tmp feeds.conf.default
+    echo "✓ feeds配置优化完成"
+fi
+
 echo "✓ 依赖处理完成"
 
 echo "============================================"
