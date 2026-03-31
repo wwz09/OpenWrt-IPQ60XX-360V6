@@ -42,6 +42,14 @@ echo "✓ NSS驱动清理完成"
 # ==================== 添加第三方软件源 ====================
 echo "添加第三方软件源..."
 
+# 使用 kenzok8/small-package 作为插件源
+if ! grep -q "small" feeds.conf.default; then
+    echo "src-git small https://github.com/kenzok8/small" >> feeds.conf.default
+    echo "✓ small 插件源添加完成"
+else
+    echo "✓ small 插件源已存在"
+fi
+
 # 检查并添加OpenClash插件（避免重复）
 if ! grep -q "openclash" feeds.conf.default; then
     echo "src-git openclash https://github.com/vernesong/OpenClash" >> feeds.conf.default
@@ -51,13 +59,6 @@ else
 fi
 
 echo "✓ 第三方软件源添加完成"
-
-# ==================== 添加缺失的依赖包 ====================
-echo "添加缺失的依赖包..."
-# 克隆libpcre包
-[ -d "package/libpcre" ] && rm -rf package/libpcre
-git clone https://github.com/openwrt/packages.git package/packages || echo "⚠ 依赖包克隆失败，跳过"
-echo "✓ 依赖包添加完成"
 
 # ==================== 修改默认主题 ====================
 echo "设置默认主题为Argon..."
@@ -74,40 +75,8 @@ if [ -f "package/lean/default-settings/files/zzz-default-settings" ]; then
     echo "✓ 默认密码设置完成 (密码: password)"
 fi
 
-# ==================== 添加自定义软件包 ====================
-echo "添加自定义软件包..."
-
-# 克隆主题
-[ -d "package/luci-theme-argon" ] && rm -rf package/luci-theme-argon
-git clone -b master https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
-echo "✓ Argon主题克隆完成"
-
-# 克隆Argon配置
-[ -d "package/luci-app-argon-config" ] && rm -rf package/luci-app-argon-config
-git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
-echo "✓ Argon配置克隆完成"
-
-# 克隆Design主题
-[ -d "package/luci-theme-design" ] && rm -rf package/luci-theme-design
-git clone https://github.com/gngpp/luci-theme-design.git package/luci-theme-design
-echo "✓ Design主题克隆完成"
-
-# 克隆Design配置
-[ -d "package/luci-app-design-config" ] && rm -rf package/luci-app-design-config
-git clone https://github.com/gngpp/luci-app-design-config.git package/luci-app-design-config
-echo "✓ Design配置克隆完成"
-
-# 克隆Aurora主题（使用镜像源）
-[ -d "package/luci-theme-aurora" ] && rm -rf package/luci-theme-aurora
-git clone --depth=1 https://hub.fastgit.org/thinktip/luci-theme-aurora.git package/luci-theme-aurora || echo "⚠ Aurora主题克隆失败，跳过"
-
-# 克隆Aurora配置（使用镜像源）
-[ -d "package/luci-app-aurora-config" ] && rm -rf package/luci-app-aurora-config
-git clone --depth=1 https://hub.fastgit.org/thinktip/luci-app-aurora-config.git package/luci-app-aurora-config || echo "⚠ Aurora配置克隆失败，跳过"
-
-# 克隆应用市场（使用镜像源）
-[ -d "package/luci-app-store" ] && rm -rf package/luci-app-store
-git clone --depth=1 https://hub.fastgit.org/linkease/luci-app-store.git package/luci-app-store || echo "⚠ 应用市场克隆失败，跳过"
+# ==================== 自定义软件包（通过feeds提供）====================
+echo "自定义软件包将通过 feeds 提供（kenzok8/small）"
 
 echo "============================================"
 echo "MediaTek DIY Part 1 脚本执行完成"
