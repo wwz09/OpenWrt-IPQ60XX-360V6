@@ -32,6 +32,13 @@ if [ -f "package/lean/default-settings/files/zzz-default-settings" ]; then
     echo "✓ 时区设置完成"
 fi
 
+# ==================== 处理NSS驱动问题 ====================
+echo "处理NSS驱动问题..."
+# 移除可能导致冲突的NSS包
+find package -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
+echo "✓ NSS驱动清理完成"
+
 # ==================== 添加第三方软件源 ====================
 echo "添加第三方软件源..."
 
@@ -44,6 +51,13 @@ else
 fi
 
 echo "✓ 第三方软件源添加完成"
+
+# ==================== 添加缺失的依赖包 ====================
+echo "添加缺失的依赖包..."
+# 克隆libpcre包
+[ -d "package/libpcre" ] && rm -rf package/libpcre
+git clone https://github.com/openwrt/packages.git package/packages || echo "⚠ 依赖包克隆失败，跳过"
+echo "✓ 依赖包添加完成"
 
 # ==================== 修改默认主题 ====================
 echo "设置默认主题为Argon..."
@@ -83,20 +97,17 @@ echo "✓ Design主题克隆完成"
 git clone https://github.com/gngpp/luci-app-design-config.git package/luci-app-design-config
 echo "✓ Design配置克隆完成"
 
-# 克隆Aurora主题
+# 克隆Aurora主题（使用镜像源）
 [ -d "package/luci-theme-aurora" ] && rm -rf package/luci-theme-aurora
-git clone https://github.com/thinktip/luci-theme-aurora.git package/luci-theme-aurora
-echo "✓ Aurora主题克隆完成"
+git clone --depth=1 https://hub.fastgit.org/thinktip/luci-theme-aurora.git package/luci-theme-aurora || echo "⚠ Aurora主题克隆失败，跳过"
 
-# 克隆Aurora配置
+# 克隆Aurora配置（使用镜像源）
 [ -d "package/luci-app-aurora-config" ] && rm -rf package/luci-app-aurora-config
-git clone https://github.com/thinktip/luci-app-aurora-config.git package/luci-app-aurora-config
-echo "✓ Aurora配置克隆完成"
+git clone --depth=1 https://hub.fastgit.org/thinktip/luci-app-aurora-config.git package/luci-app-aurora-config || echo "⚠ Aurora配置克隆失败，跳过"
 
-# 克隆应用市场
+# 克隆应用市场（使用镜像源）
 [ -d "package/luci-app-store" ] && rm -rf package/luci-app-store
-git clone https://github.com/linkease/luci-app-store.git package/luci-app-store
-echo "✓ 应用市场克隆完成"
+git clone --depth=1 https://hub.fastgit.org/linkease/luci-app-store.git package/luci-app-store || echo "⚠ 应用市场克隆失败，跳过"
 
 echo "============================================"
 echo "MediaTek DIY Part 1 脚本执行完成"

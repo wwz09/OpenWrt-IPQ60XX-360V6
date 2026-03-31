@@ -295,18 +295,52 @@ echo "✓ 防火墙规则添加完成，已添加IPv6支持"
 echo "修复hostapd编译错误..."
 # 修复he_mu_edca成员缺失问题 - 这是hostapd编译失败的根本原因
 # 错误信息：'struct hostapd_config' has no member named 'he_mu_edca'
+
+# 创建hostapd补丁文件
+echo "创建hostapd补丁文件..."
+mkdir -p package/network/services/hostapd/patches
+cat > package/network/services/hostapd/patches/0001-fix-he_mu_edca.patch << 'EOF'
+--- a/src/ap/hostapd.c
++++ b/src/ap/hostapd.c
+@@ -4718,9 +4718,13 @@
+ 		if (csa_settings->mode == NL80211_CHAN_SWITCH_MODE_80211R) {
+ 			csa_settings->ht_oper_chwidth = hapd->iface->conf->ht_op_mode;
+ 			csa_settings->vht_oper_chwidth = hapd->iface->conf->vht_op_mode;
++#ifdef CONFIG_IEEE80211AX
+ 			if (hapd->iface->conf->he_mu_edca.he_qos_info & 0x000f) {
+ 				hapd->iface->conf->he_mu_edca.he_qos_info &= 0xfff0;
+ 			}
++#else
++/* CONFIG_IEEE80211AX not defined, skip he_mu_edca */
++#endif
+ 		}
+ 	}
+ }
+EOF
+
+echo "✓ hostapd补丁文件创建完成"
+
+# 修改hostapd Makefile以应用补丁
+echo "修改hostapd Makefile以应用补丁..."
 if [ -d "package/network/services/hostapd" ]; then
-    # 查找并修复hostapd源码中的he_mu_edca问题
-    find package/network/services/hostapd -name "*.c" -type f | while read file; do
-        if grep -q "he_mu_edca" "$file" 2>/dev/null; then
-            # 备份原文件
-            cp "$file" "$file.bak"
-            # 添加条件编译检查，确保CONFIG_IEEE80211AX已定义
-            sed -i 's/hapd->iface->conf->he_mu_edca/#ifdef CONFIG_IEEE80211AX\n\t\thapd->iface->conf->he_mu_edca/g' "$file"
-            sed -i 's/he_qos_info &= 0xfff0;/he_qos_info \&= 0xfff0;\n#else\n\t\t\/\/ CONFIG_IEEE80211AX not defined, skip he_mu_edca\n#endif/g' "$file"
-            echo "✓ 修复文件: $file"
+    # 检查Makefile是否存在
+    if [ -f "package/network/services/hostapd/Makefile" ]; then
+        # 检查是否已经配置了补丁目录
+        if ! grep -q "PATCH_DIR" "package/network/services/hostapd/Makefile"; then
+            # 在Makefile中添加补丁配置
+            sed -i '/include $(INCLUDE_DIR)\/kernel.mk/a \
+\n# 应用自定义补丁
+PATCH_DIR := $(CURDIR)/patches
+PATCHES := $(wildcard $(PATCH_DIR)/*.patch)' "package/network/services/hostapd/Makefile"
+            echo "✓ hostapd Makefile修改完成"
+        else
+            echo "✓ hostapd Makefile已经配置了补丁目录"
         fi
-    done
+    else
+        echo "警告：未找到hostapd Makefile"
+    fi
+else
+    echo "警告：未找到hostapd目录"
 fi
 
 # 在配置中启用IEEE80211AX支持
@@ -321,6 +355,17 @@ fi
 
 echo "✓ hostapd编译错误修复完成"
 
+# ==================== 处理hostapd编译问题 ====================
+echo "处理hostapd编译问题..."
+# 清理可能导致hostapd编译失败的配置
+if [ -f ".config" ]; then
+    # 确保使用正确的hostapd版本
+    sed -i 's/CONFIG_PACKAGE_hostapd-common/CONFIG_PACKAGE_hostapd-common=y/g' .config
+    sed -i 's/CONFIG_PACKAGE_wpad/CONFIG_PACKAGE_wpad=y/g' .config
+    sed -i 's/CONFIG_PACKAGE_wpad-openssl/CONFIG_PACKAGE_wpad-openssl=y/g' .config
+    echo "✓ hostapd配置清理完成"
+fi
+
 # ==================== 处理依赖缺失问题 ====================
 echo "处理依赖缺失问题..."
 
@@ -329,7 +374,27 @@ echo "清理冲突包..."
 find package -name "luci-app-oaf" -type d | xargs rm -rf 2>/dev/null
 find package -name "luci-app-control-timewol" -type d | xargs rm -rf 2>/dev/null
 find package -name "luci-app-cpufreq" -type d | xargs rm -rf 2>/dev/null
+find package -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
+
+# 清理递归依赖冲突的包
+find package -name "luci-app-fchomo" -type d | xargs rm -rf 2>/dev/null
+find package -name "nikki" -type d | xargs rm -rf 2>/dev/null
+find package -name "fwupd*" -type d | xargs rm -rf 2>/dev/null
+
+# 清理feeds中的冲突包
+find feeds -name "luci-app-fchomo" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "nikki" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "fwupd*" -type d | xargs rm -rf 2>/dev/null
 echo "✓ 冲突包清理完成"
+
+# 安装缺失的依赖
+echo "安装缺失的依赖..."
+# 确保libpcre已安装
+if [ ! -d "package/libs/pcre" ]; then
+    mkdir -p package/libs/pcre
+    echo "src-git pcre https://github.com/openwrt/packages.git;master" >> feeds.conf.default
+    echo "✓ libpcre依赖添加完成"
+fi
 
 # 优化feeds配置，避免重复
 echo "优化feeds配置..."
