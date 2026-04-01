@@ -386,6 +386,11 @@ find feeds -name "luci-app-fchomo" -type d | xargs rm -rf 2>/dev/null
 find feeds -name "nikki" -type d | xargs rm -rf 2>/dev/null
 find feeds -name "fwupd*" -type d | xargs rm -rf 2>/dev/null
 
+# 清理可能导致冲突的 NSS 相关包
+echo "清理 NSS 相关包以避免冲突..."
+find feeds -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
+echo "✓ NSS 包清理完成"
+
 # 修复 luci-theme-design 版本号格式问题
 echo "修复 luci-theme-design 版本号格式..."
 find feeds -name "luci-theme-design" -type d | while read dir; do
