@@ -385,6 +385,19 @@ find package -name "fwupd*" -type d | xargs rm -rf 2>/dev/null
 find feeds -name "luci-app-fchomo" -type d | xargs rm -rf 2>/dev/null
 find feeds -name "nikki" -type d | xargs rm -rf 2>/dev/null
 find feeds -name "fwupd*" -type d | xargs rm -rf 2>/dev/null
+
+# 修复 luci-theme-design 版本号格式问题
+echo "修复 luci-theme-design 版本号格式..."
+find feeds -name "luci-theme-design" -type d | while read dir; do
+    if [ -f "$dir/Makefile" ]; then
+        # 修改版本号格式，移除日期部分
+        sed -i 's/5\.8\.0-20240106-r1/5.8.0-r1/g' "$dir/Makefile"
+        echo "✓ 修复了 $dir/Makefile 中的版本号"
+    fi
+done
+
+# 也清理本地包目录中的 luci-theme-design，避免冲突
+find package -name "luci-theme-design" -type d | xargs rm -rf 2>/dev/null
 echo "✓ 冲突包清理完成"
 
 # 安装缺失的依赖
