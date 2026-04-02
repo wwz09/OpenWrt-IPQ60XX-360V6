@@ -52,8 +52,8 @@ jobs:
       - name: Run DIY Part1
         run: |
           cd openwrt
-          chmod +x $GITHUB_WORKSPACE/scripts/diy-part1.sh
-          $GITHUB_WORKSPACE/scripts/diy-part1.sh
+          chmod +x $GITHUB_WORKSPACE/Scripts/diy-part1.sh
+          $GITHUB_WORKSPACE/Scripts/diy-part1.sh
 
       - name: Update Feeds
         run: |
@@ -64,8 +64,8 @@ jobs:
       - name: Run DIY Part2
         run: |
           cd openwrt
-          chmod +x $GITHUB_WORKSPACE/scripts/diy-part2.sh
-          $GITHUB_WORKSPACE/scripts/diy-part2.sh
+          chmod +x $GITHUB_WORKSPACE/Scripts/diy-part2.sh
+          $GITHUB_WORKSPACE/Scripts/diy-part2.sh
 
       - name: Load Config
         run: |
