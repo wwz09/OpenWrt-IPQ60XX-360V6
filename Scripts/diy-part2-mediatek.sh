@@ -343,15 +343,33 @@ else
     echo "警告：未找到hostapd目录"
 fi
 
-# 在配置中启用IEEE80211AX支持
-if [ -f ".config" ]; then
-    echo "启用IEEE80211AX支持..."
-    echo "CONFIG_PACKAGE_kmod-cfg80211=y" >> .config
-    echo "CONFIG_PACKAGE_hostapd-common=y" >> .config
-    echo "CONFIG_PACKAGE_wpad-basic-openssl=y" >> .config
-    echo "CONFIG_IEEE80211AX_SUPPORT=y" >> .config
-    echo "✓ hostapd配置更新完成"
+# 确保hostapd补丁目录存在并正确创建补丁
+if [ ! -d "package/network/services/hostapd/patches" ]; then
+    mkdir -p package/network/services/hostapd/patches
 fi
+
+# 重新创建hostapd补丁文件，确保补丁内容正确
+echo "重新创建hostapd补丁文件..."
+cat > package/network/services/hostapd/patches/0001-fix-he_mu_edca.patch << 'EOF'
+--- a/src/ap/hostapd.c
++++ b/src/ap/hostapd.c
+@@ -4718,9 +4718,13 @@
+ 		if (csa_settings->mode == NL80211_CHAN_SWITCH_MODE_80211R) {
+ 			csa_settings->ht_oper_chwidth = hapd->iface->conf->ht_op_mode;
+ 			csa_settings->vht_oper_chwidth = hapd->iface->conf->vht_op_mode;
++		#ifdef CONFIG_IEEE80211AX
+ 			if (hapd->iface->conf->he_mu_edca.he_qos_info & 0x000f) {
+ 				hapd->iface->conf->he_mu_edca.he_qos_info &= 0xfff0;
+ 			}
++		#else
++		/* CONFIG_IEEE80211AX not defined, skip he_mu_edca */
++		#endif
+ 		}
+ 	}
+ }
+EOF
+
+echo "✓ hostapd补丁文件重新创建完成"
 
 echo "✓ hostapd编译错误修复完成"
 
@@ -388,30 +406,71 @@ find feeds -name "fwupd*" -type d | xargs rm -rf 2>/dev/null
 
 # 清理可能导致冲突的 NSS 相关包
 echo "清理 NSS 相关包以避免冲突..."
+# 清理所有 NSS 相关包
 find feeds -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
-echo "✓ NSS 包清理完成"
+find feeds -name "nss-*" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "sqm-scripts-nss" -type d | xargs rm -rf 2>/dev/null
+
+# 清理本地包目录中的 NSS 相关包
+find package -name "qca-nss*" -type d | xargs rm -rf 2>/dev/null
+find package -name "nss-*" -type d | xargs rm -rf 2>/dev/null
+
+# 处理 mac80211 中的 NSS 依赖问题
+if [ -f "package/kernel/mac80211/Makefile" ]; then
+    echo "处理 mac80211 中的 NSS 依赖问题..."
+    # 移除 NSS 相关依赖
+    sed -i '/kmod-qca-nss-drv/d' "package/kernel/mac80211/Makefile"
+    sed -i '/kmod-qca-nss-drv-wifi-meshmgr/d' "package/kernel/mac80211/Makefile"
+    echo "✓ mac80211 NSS 依赖清理完成"
+fi
+
+echo "✓ NSS 相关包清理完成"
 
 # 修复 luci-theme-design 版本号格式问题
 echo "修复 luci-theme-design 版本号格式..."
-find feeds -name "luci-theme-design" -type d | while read dir; do
+# 查找所有可能的 luci-theme-design 目录（包括不同的feed源）
+find feeds -name "luci-theme-design*" -type d | while read dir; do
     if [ -f "$dir/Makefile" ]; then
-        # 修改版本号格式，移除日期部分
-        sed -i 's/5\.8\.0-20240106-r1/5.8.0-r1/g' "$dir/Makefile"
+        # 更通用的版本号修复，匹配任何包含日期的版本号格式
+        sed -i 's/5\.8\.0-[0-9]\{8\}-r[0-9]/5.8.0-r1/g' "$dir/Makefile"
         echo "✓ 修复了 $dir/Makefile 中的版本号"
     fi
 done
 
 # 也清理本地包目录中的 luci-theme-design，避免冲突
-find package -name "luci-theme-design" -type d | xargs rm -rf 2>/dev/null
-echo "✓ 冲突包清理完成"
+find package -name "luci-theme-design*" -type d | xargs rm -rf 2>/dev/null
+echo "✓ luci-theme-design 版本号修复完成"
 
 # 安装缺失的依赖
 echo "安装缺失的依赖..."
+
 # 确保libpcre已安装
 if [ ! -d "package/libs/pcre" ]; then
     mkdir -p package/libs/pcre
     echo "src-git pcre https://github.com/openwrt/packages.git;master" >> feeds.conf.default
     echo "✓ libpcre依赖添加完成"
+fi
+
+# 处理python3相关依赖
+echo "处理python3相关依赖..."
+# 确保python3-pysocks和python3-unidecode可用
+if [ -f "feeds.conf.default" ]; then
+    # 确保packages feed已添加
+    if ! grep -q "packages" feeds.conf.default; then
+        echo "src-git packages https://github.com/openwrt/packages.git;master" >> feeds.conf.default
+    fi
+    echo "✓ python3依赖配置完成"
+fi
+
+# 处理boost-system依赖
+echo "处理boost-system依赖..."
+# 确保boost相关包可用
+if [ -f "feeds.conf.default" ]; then
+    # 确保packages feed已添加
+    if ! grep -q "packages" feeds.conf.default; then
+        echo "src-git packages https://github.com/openwrt/packages.git;master" >> feeds.conf.default
+    fi
+    echo "✓ boost依赖配置完成"
 fi
 
 # 优化feeds配置，避免重复
@@ -421,6 +480,16 @@ if [ -f "feeds.conf.default" ]; then
     awk '!seen[$0]++' feeds.conf.default > feeds.conf.default.tmp && mv feeds.conf.default.tmp feeds.conf.default
     echo "✓ feeds配置优化完成"
 fi
+
+# 清理可能导致依赖冲突的包
+echo "清理依赖冲突包..."
+# 清理可能导致python依赖冲突的包
+find feeds -name "onionshare-cli" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "fail2ban" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "setools" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "trojan-plus" -type d | xargs rm -rf 2>/dev/null
+
+echo "✓ 依赖冲突包清理完成"
 
 echo "✓ 依赖处理完成"
 
