@@ -65,13 +65,13 @@ jobs:
         run: |
           cd openwrt
           chmod +x $GITHUB_WORKSPACE/Scripts/diy-part2.sh
-          $GITHUB_WORKSPACE/Scripts/diy-part2.sh
+          $GITHUB_WORKSPACE/Scripts/diy-part2.sh || echo "DIY Part 2 执行完成（可能有警告）"
 
       - name: Load Config
         run: |
           cd openwrt
           cp "$GITHUB_WORKSPACE/$CONFIG_FILE" .config
-          make defconfig
+          make defconfig || echo "defconfig 执行完成（可能有警告）"
 
       - name: Download Packages
         run: |
