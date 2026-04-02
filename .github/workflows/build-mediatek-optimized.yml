@@ -217,7 +217,7 @@ EOF
           cd openwrt
           mkdir -p $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}
           find bin/targets/ -type f \( -name "*sysupgrade*.bin" -o -name "*factory*.bin" -o -name "*.img.gz" \) -exec cp {} $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/ \;
-          cat > $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/buildinfo.txt << EOF
+          cat > $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/buildinfo.txt << 'EOF'
 设备: ${{ matrix.device }}
 编译时间: $(date '+%Y-%m-%d %H:%M:%S')
 源码仓库: $REPO_URL
@@ -263,7 +263,7 @@ EOF
               cp -r "$dir"* release/mediatek/
             fi
           done
-          cat > release/mediatek/release_notes.txt << EOF
+          cat > release/mediatek/release_notes.txt << 'EOF'
 MediaTek 自动编译固件
 ====================
 
