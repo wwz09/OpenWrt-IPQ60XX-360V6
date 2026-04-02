@@ -1,0 +1,131 @@
+name: Build Qihoo 360 V6
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0'
+  push:
+    branches: [main]
+    paths:
+      - 'Config/qihoo-360v6.config'
+      - 'feeds.conf.default'
+      - 'scripts/**'
+      - '.github/workflows/build-qihoo-360v6.yml'
+
+permissions:
+  contents: write
+
+env:
+  REPO_URL: https://github.com/LiBwrt/openwrt-6.x
+  REPO_BRANCH: main-nss
+  DEVICE_NAME: qihoo-360v6
+  CONFIG_FILE: Config/qihoo-360v6.config
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Clone Source
+        run: |
+          git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+          cd openwrt
+          echo "OpenWrt Commit: $(git rev-parse --short HEAD)"
+
+      - name: Setup Feeds
+        run: |
+          cd openwrt
+          cp "$GITHUB_WORKSPACE/feeds.conf.default" feeds.conf.default
+          cat feeds.conf.default
+
+      - name: Run DIY Part1
+        run: |
+          cd openwrt
+          chmod +x $GITHUB_WORKSPACE/scripts/diy-part1.sh
+          $GITHUB_WORKSPACE/scripts/diy-part1.sh
+
+      - name: Update Feeds
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Run DIY Part2
+        run: |
+          cd openwrt
+          chmod +x $GITHUB_WORKSPACE/scripts/diy-part2.sh
+          $GITHUB_WORKSPACE/scripts/diy-part2.sh
+
+      - name: Load Config
+        run: |
+          cd openwrt
+          cp "$GITHUB_WORKSPACE/$CONFIG_FILE" .config
+          make defconfig
+
+      - name: Download Packages
+        run: |
+          cd openwrt
+          make download -j8 || make download -j1 V=s
+          find dl -size -1024c -delete
+
+      - name: Compile
+        id: compile
+        run: |
+          cd openwrt
+          make -j$(nproc) || make -j1 V=s
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Collect Firmware
+        if: steps.compile.outputs.status == 'success'
+        run: |
+          cd openwrt
+          mkdir -p $GITHUB_WORKSPACE/firmware
+          find bin/targets/ -type f \( -name "*sysupgrade*.bin" -o -name "*factory*.bin" \) -exec cp {} $GITHUB_WORKSPACE/firmware/ \;
+          ls -lh $GITHUB_WORKSPACE/firmware/
+
+      - name: Upload Artifact
+        if: steps.compile.outputs.status == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DEVICE_NAME }}-${{ github.run_number }}
+          path: firmware/*
+
+  release:
+    runs-on: ubuntu-22.04
+    needs: build
+    if: needs.build.result == 'success'
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.DEVICE_NAME }}-${{ github.run_number }}
+          path: firmware
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.DEVICE_NAME }}-${{ github.run_number }}
+          name: Qihoo 360 V6 Build ${{ github.run_number }}
+          body: |
+            **Build Info:**
+            - Device: Qihoo 360 V6
+            - Date: ${{ github.event.repository.updated_at }}
+            - Commit: ${{ github.sha }}
+            
+            **Firmware Files:**
+            - `*factory.bin` - First time flash
+            - `*sysupgrade.bin` - Upgrade existing
+          files: firmware/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
