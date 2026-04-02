@@ -1,14 +1,6 @@
-# OpenWrt MediaTek 平台自动编译工作流（优化版）
-# 作者: 李杰
-# 功能: 编译 MediaTek 系列设备固件
-# 版本: 2.0
-# 优化: 简化流程、提高效率、增强错误处理
-
 name: Build MediaTek Firmware (Optimized)
 
-# 触发条件
 on:
-  # 手动触发
   workflow_dispatch:
     inputs:
       device:
@@ -23,12 +15,8 @@ on:
         required: false
         default: 'false'
         type: string
-  
-  # 定时触发 (每周日凌晨3点)
   schedule:
     - cron: '0 3 * * 0'
-  
-  # 代码推送触发
   push:
     branches:
       - main
@@ -37,40 +25,29 @@ on:
       - '.github/workflows/**'
       - 'Scripts/**'
 
-# 权限配置
 permissions:
   contents: write
 
-# 环境变量
 env:
-  # 源码仓库配置
   REPO_URL: https://github.com/LiBwrt/openwrt-6.x
   REPO_BRANCH: main-nss
-  
-  # 第三方插件仓库
   PACKAGE_URL: https://github.com/kenzok8/openwrt-packages
   DEPENDENCY_URL: https://github.com/kenzok8/small
   EXTRA_PACKAGE_URL: https://github.com/fantastic-packages/packages
-  
-  # 固件发布配置
   RELEASE_TAG: MediaTek-AutoBuild-${{ github.run_number }}
   RELEASE_NAME: MediaTek 自动编译固件 ${{ github.run_number }}
-  
-  # 编译配置
   TZ: Asia/Shanghai
   DIY_P1_SH: Scripts/diy-part1-mediatek-optimized.sh
   DIY_P2_SH: Scripts/diy-part2-mediatek-optimized.sh
   FIX_SCRIPT: Scripts/fix-config-errors-optimized.sh
 
 jobs:
-  # 编译阶段
   build:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         device: [cmcc-rax3000m]
-    
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -82,31 +59,12 @@ jobs:
           echo "============================================"
           echo "初始化编译环境"
           echo "============================================"
-          
-          # 更新软件包列表
           sudo apt-get update -y
-          
-          # 安装编译依赖
-          sudo apt-get install -y \
-            ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-            bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
-            git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
-            libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
-            libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build \
-            p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools \
-            qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
-            vim wget xmlto xxd zlib1g-dev
-          
-          # 清理缓存
+          sudo apt-get install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
           sudo apt-get clean -y
-          
-          # 设置时区
           sudo timedatectl set-timezone "$TZ"
-          
-          # 配置git
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
-          
           echo "✓ 编译环境初始化完成"
 
       - name: 克隆OpenWrt源码
@@ -114,17 +72,12 @@ jobs:
           echo "============================================"
           echo "克隆OpenWrt源码"
           echo "============================================"
-          
-          # 克隆源码仓库
           git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
-          
-          # 显示源码信息
           cd openwrt
           echo "源码仓库: $REPO_URL"
           echo "分支: $REPO_BRANCH"
           echo "最新提交:"
           git log --oneline -1
-          
           echo "✓ 源码克隆完成"
 
       - name: 配置Feeds源
@@ -132,13 +85,8 @@ jobs:
           echo "============================================"
           echo "配置Feeds源"
           echo "============================================"
-          
           cd openwrt
-          
-          # 备份原始配置
           cp feeds.conf.default feeds.conf.default.bak
-          
-          # 创建新的feeds配置
           cat > feeds.conf.default << 'EOF'
 # 官方源
 src-git packages https://github.com/immortalwrt/packages.git
@@ -151,7 +99,6 @@ src-git kenzo https://github.com/kenzok8/openwrt-packages
 src-git small https://github.com/kenzok8/small
 src-git fantastic_packages https://github.com/fantastic-packages/packages.git;master
 EOF
-          
           echo "✓ Feeds源配置完成"
           cat feeds.conf.default
 
@@ -160,17 +107,11 @@ EOF
           echo "============================================"
           echo "更新并安装Feeds"
           echo "============================================"
-          
           cd openwrt
-          
-          # 更新feeds
           echo "正在更新feeds..."
           ./scripts/feeds update -a
-          
-          # 安装feeds
           echo "正在安装feeds..."
           ./scripts/feeds install -a
-          
           echo "✓ Feeds更新和安装完成"
 
       - name: 执行DIY脚本 Part 1
@@ -178,13 +119,9 @@ EOF
           echo "============================================"
           echo "执行DIY脚本 Part 1"
           echo "============================================"
-          
           cd openwrt
-          
-          # 执行第一部分自定义脚本
           chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH
           $GITHUB_WORKSPACE/$DIY_P1_SH
-          
           echo "✓ DIY脚本 Part 1执行完成"
 
       - name: 执行DIY脚本 Part 2
@@ -192,13 +129,9 @@ EOF
           echo "============================================"
           echo "执行DIY脚本 Part 2"
           echo "============================================"
-          
           cd openwrt
-          
-          # 执行第二部分自定义脚本
           chmod +x $GITHUB_WORKSPACE/$DIY_P2_SH
           $GITHUB_WORKSPACE/$DIY_P2_SH
-          
           echo "✓ DIY脚本 Part 2执行完成"
 
       - name: 执行配置错误修复脚本
@@ -206,13 +139,9 @@ EOF
           echo "============================================"
           echo "执行配置错误修复脚本"
           echo "============================================"
-          
           cd openwrt
-          
-          # 执行配置错误修复脚本
           chmod +x $GITHUB_WORKSPACE/$FIX_SCRIPT
           $GITHUB_WORKSPACE/$FIX_SCRIPT
-          
           echo "✓ 配置错误修复脚本执行完成"
 
       - name: 加载设备配置文件
@@ -220,10 +149,7 @@ EOF
           echo "============================================"
           echo "加载设备配置文件"
           echo "============================================"
-          
           cd openwrt
-          
-          # 根据设备选择对应的配置文件
           case "${{ matrix.device }}" in
             cmcc-rax3000m)
               CONFIG_FILE="$GITHUB_WORKSPACE/Config/cmcc-rax3000m-optimized.config"
@@ -233,20 +159,13 @@ EOF
               exit 1
               ;;
           esac
-          
-          # 检查配置文件是否存在
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "错误: 配置文件不存在 $CONFIG_FILE"
             exit 1
           fi
-          
-          # 复制配置文件
           cp "$CONFIG_FILE" .config
           echo "✓ 已加载配置文件: $CONFIG_FILE"
-          
-          # 展开配置
           make defconfig
-          
           echo "✓ 配置文件加载完成"
 
       - name: 下载依赖包
@@ -254,17 +173,11 @@ EOF
           echo "============================================"
           echo "下载依赖包"
           echo "============================================"
-          
           cd openwrt
-          
-          # 下载依赖包
           make download -j8 || make download -j1 V=s
-          
-          # 验证下载
           echo "验证下载的文件..."
           find dl -size -1024c -exec ls -lh {} \; | head -20
           find dl -size -1024c -delete
-          
           echo "✓ 依赖包下载完成"
 
       - name: 启用SSH调试 (可选)
@@ -279,17 +192,10 @@ EOF
           echo "============================================"
           echo "开始编译固件"
           echo "============================================"
-          
           cd openwrt
-          
-          # 显示编译信息
           echo "编译线程数: $(nproc)"
           echo "设备: ${{ matrix.device }}"
-          
-          # 开始编译
           make -j$(nproc) || make -j1 V=s
-          
-          # 检查编译结果
           if [ $? -eq 0 ]; then
             echo "status=success" >> $GITHUB_OUTPUT
             echo "✓ 固件编译成功"
@@ -298,8 +204,6 @@ EOF
             echo "✗ 固件编译失败"
             exit 1
           fi
-          
-          # 查找生成的固件文件
           echo "查找固件文件..."
           FIRMWARE_PATH=$(find bin/targets/ -type f \( -name "*.bin" -o -name "*.img" -o -name "*.gz" \) | head -20)
           echo "$FIRMWARE_PATH"
@@ -310,16 +214,9 @@ EOF
           echo "============================================"
           echo "整理固件文件"
           echo "============================================"
-          
           cd openwrt
-          
-          # 创建固件输出目录
           mkdir -p $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}
-          
-          # 复制固件文件
           find bin/targets/ -type f \( -name "*sysupgrade*.bin" -o -name "*factory*.bin" -o -name "*.img.gz" \) -exec cp {} $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/ \;
-          
-          # 创建构建信息文件
           cat > $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/buildinfo.txt << EOF
 设备: ${{ matrix.device }}
 编译时间: $(date '+%Y-%m-%d %H:%M:%S')
@@ -328,11 +225,8 @@ EOF
 工作流运行: #${{ github.run_number }}
 提交哈希: $(git rev-parse --short HEAD)
 EOF
-          
-          # 显示整理后的文件
           echo "整理后的固件文件:"
-          ls -lh $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/ 
-          
+          ls -lh $GITHUB_WORKSPACE/firmware/mediatek/${{ matrix.device }}/
           echo "✓ 固件文件整理完成"
 
       - name: 上传固件到Artifacts
@@ -343,7 +237,6 @@ EOF
           path: firmware/mediatek/${{ matrix.device }}/*
           if-no-files-found: error
 
-  # 发布阶段
   release:
     runs-on: ubuntu-22.04
     needs: build
@@ -364,18 +257,12 @@ EOF
           echo "============================================"
           echo "整理发布文件"
           echo "============================================"
-          
-          # 创建发布目录
           mkdir -p release/mediatek
-          
-          # 移动所有固件到发布目录
           for dir in firmware/MEDIATEK-*/; do
             if [ -d "$dir" ]; then
               cp -r "$dir"* release/mediatek/
             fi
           done
-          
-          # 创建发布说明
           cat > release/mediatek/release_notes.txt << EOF
 MediaTek 自动编译固件
 ====================
@@ -404,11 +291,8 @@ MediaTek 自动编译固件
 3. 刷机前请备份重要配置
 4. 刷机有风险，请谨慎操作
 EOF
-          
-          # 显示发布文件
           echo "发布文件列表:"
           ls -lh release/mediatek/
-          
           echo "✓ 发布文件整理完成"
 
       - name: 创建GitHub Release
