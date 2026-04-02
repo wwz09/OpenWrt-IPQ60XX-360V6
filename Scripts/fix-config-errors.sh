@@ -140,6 +140,39 @@ if [ -f "feeds.conf.default" ]; then
     cat feeds.conf.default
 fi
 
+# ==================== 处理内核模块依赖问题 ====================
+echo "处理内核模块依赖问题..."
+
+# 清理可能导致依赖冲突的包
+find package -name "aic8800" -type d | xargs rm -rf 2>/dev/null
+find package -name "automount" -type d | xargs rm -rf 2>/dev/null
+find package -name "basicstation" -type d | xargs rm -rf 2>/dev/null
+find package -name "beep" -type d | xargs rm -rf 2>/dev/null
+find package -name "bigclown-gateway" -type d | xargs rm -rf 2>/dev/null
+find package -name "bluld" -type d | xargs rm -rf 2>/dev/null
+find package -name "comgt" -type d | xargs rm -rf 2>/dev/null
+find package -name "dmx_usb_module" -type d | xargs rm -rf 2>/dev/null
+find package -name "fail2ban" -type d | xargs rm -rf 2>/dev/null
+find package -name "fibocom-qmi-wwan" -type d | xargs rm -rf 2>/dev/null
+find package -name "gl-puli-mcu" -type d | xargs rm -rf 2>/dev/null
+find package -name "keepalived" -type d | xargs rm -rf 2>/dev/null
+
+# 清理feeds中的冲突包
+find feeds -name "aic8800" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "automount" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "basicstation" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "beep" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "bigclown-gateway" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "bluld" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "comgt" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "dmx_usb_module" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "fail2ban" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "fibocom-qmi-wwan" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "gl-puli-mcu" -type d | xargs rm -rf 2>/dev/null
+find feeds -name "keepalived" -type d | xargs rm -rf 2>/dev/null
+
+echo "✓ 依赖冲突包清理完成"
+
 # ==================== 修复配置文件生成问题 ====================
 echo "修复配置文件生成问题..."
 
