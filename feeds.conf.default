@@ -7,4 +7,3 @@ src-git telephony https://github.com/openwrt/telephony.git
 # 第三方源
 src-git kenzo https://github.com/kenzok8/openwrt-packages
 src-git small https://github.com/kenzok8/small
-src-git --root=feeds fantastic_packages https://github.com/fantastic-packages/packages.git;master
