@@ -129,6 +129,21 @@ jobs:
           echo "分支: $REPO_BRANCH"
           echo "最新提交:"
           git log --oneline -1
+          # 检查源码结构
+          ls -la
+          # 确保Config.in文件存在
+          if [ ! -f "Config.in" ]; then
+            echo "Config.in文件不存在，尝试生成..."
+            # 初始化源码
+            ./scripts/feeds update -a
+            ./scripts/feeds install -a
+            # 生成Config.in文件
+            make defconfig
+          else
+            echo "Config.in文件已存在"
+          fi
+          # 再次检查
+          ls -la Config.in
 
       - name: 加载自定义feeds
         run: |
@@ -140,18 +155,18 @@ jobs:
           # 显示feeds配置
           cat feeds.conf.default
 
+      - name: 更新并安装feeds
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
       - name: 执行DIY脚本 (Part 1)
         run: |
           cd openwrt
           # 执行第一部分自定义脚本
           chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH
           $GITHUB_WORKSPACE/$DIY_P1_SH
-
-      - name: 更新并安装feeds
-        run: |
-          cd openwrt
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
 
       - name: 执行DIY脚本 (Part 2)
         run: |
@@ -166,6 +181,20 @@ jobs:
           # 执行配置错误修复脚本
           chmod +x $GITHUB_WORKSPACE/Scripts/fix-config-errors.sh
           $GITHUB_WORKSPACE/Scripts/fix-config-errors.sh
+
+      - name: 再次确保Config.in文件存在
+        run: |
+          cd openwrt
+          # 确保Config.in文件存在
+          if [ ! -f "Config.in" ]; then
+            echo "Config.in文件不存在，再次生成..."
+            # 生成Config.in文件
+            make defconfig
+          else
+            echo "Config.in文件已存在"
+          fi
+          # 再次检查
+          ls -la Config.in
 
       - name: 加载设备配置文件
         run: |
