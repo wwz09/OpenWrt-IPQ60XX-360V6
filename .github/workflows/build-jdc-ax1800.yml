@@ -71,6 +71,11 @@ jobs:
         run: |
           cd openwrt
           cp "$GITHUB_WORKSPACE/$CONFIG_FILE" .config
+          # 移除可能导致递归依赖的包
+          sed -i '/PACKAGE_luci-app-fchomo/d' .config
+          sed -i '/PACKAGE_nikki/d' .config
+          sed -i '/PACKAGE_fwupd/d' .config
+          sed -i '/FWUPD_PLUGIN/d' .config
           make defconfig || echo "defconfig 执行完成（可能有警告）"
 
       - name: Download Packages
