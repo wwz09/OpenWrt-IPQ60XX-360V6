@@ -76,17 +76,30 @@ jobs:
           sed -i '/PACKAGE_nikki/d' .config
           sed -i '/PACKAGE_fwupd/d' .config
           sed -i '/FWUPD_PLUGIN/d' .config
-          # 确保配置过程非交互式
+          # 添加内核配置选项，避免交互式提示
           echo "CONFIG_NF_CONNTRACK_DSCPREMARK_EXT=n" >> .config
-          # 尝试生成默认配置
+          echo "CONFIG_NETFILTER_INGRESS=y" >> .config
+          echo "CONFIG_NETFILTER_EGRESS=n" >> .config
+          echo "CONFIG_NETFILTER_NETLINK=m" >> .config
+          echo "CONFIG_NETFILTER_NETLINK_QUEUE=n" >> .config
+          echo "CONFIG_NETFILTER_NETLINK_LOG=n" >> .config
+          echo "CONFIG_NETFILTER_NETLINK_OSF=n" >> .config
+          echo "CONFIG_NF_CONNTRACK=m" >> .config
+          echo "CONFIG_NF_LOG_SYSLOG=m" >> .config
+          echo "CONFIG_NF_CONNTRACK_MARK=y" >> .config
+          echo "CONFIG_NF_CONNTRACK_ZONES=y" >> .config
+          echo "CONFIG_NF_CONNTRACK_PROCFS=y" >> .config
+          echo "CONFIG_NF_CONNTRACK_EVENTS=y" >> .config
+          echo "CONFIG_NF_CONNTRACK_TIMEOUT=y" >> .config
+          # 设置环境变量确保完全非交互式
+          export KCONFIG_CONFIG=.config
+          export KCONFIG_NOTIMESTAMP=true
+          # 生成默认配置
           make defconfig || echo "defconfig 执行完成（可能有警告）"
-          # 再次尝试同步配置
+          # 同步配置
           make syncconfig || echo "syncconfig 执行完成（可能有警告）"
-          # 再次生成默认配置，确保所有配置都正确
+          # 再次生成默认配置
           make defconfig || echo "defconfig 再次执行完成（可能有警告）"
-          # 清理可能的配置冲突
-          make cleanconfig || echo "cleanconfig 执行完成（可能有警告）"
-          make defconfig || echo "defconfig 执行完成（可能有警告）"
 
       - name: Download Packages
         run: |
