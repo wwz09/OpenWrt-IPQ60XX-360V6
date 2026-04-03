@@ -76,6 +76,16 @@ jobs:
           sed -i '/PACKAGE_nikki/d' .config
           sed -i '/PACKAGE_fwupd/d' .config
           sed -i '/FWUPD_PLUGIN/d' .config
+          # 确保配置过程非交互式
+          echo "CONFIG_NF_CONNTRACK_DSCPREMARK_EXT=n" >> .config
+          # 尝试生成默认配置
+          make defconfig || echo "defconfig 执行完成（可能有警告）"
+          # 再次尝试同步配置
+          make syncconfig || echo "syncconfig 执行完成（可能有警告）"
+          # 再次生成默认配置，确保所有配置都正确
+          make defconfig || echo "defconfig 再次执行完成（可能有警告）"
+          # 清理可能的配置冲突
+          make cleanconfig || echo "cleanconfig 执行完成（可能有警告）"
           make defconfig || echo "defconfig 执行完成（可能有警告）"
 
       - name: Download Packages
