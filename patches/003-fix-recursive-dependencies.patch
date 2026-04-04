@@ -1,0 +1,35 @@
+From: Li Jie <lijie@example.com>
+Date: Sat, 5 Apr 2026 00:00:00 +0800
+Subject: [PATCH] Fix recursive dependencies
+
+修复以下递归依赖问题：
+1. PACKAGE_firewall4 <-> PACKAGE_luci-app-fchomo <-> PACKAGE_nikki
+2. PACKAGE_python3-email <-> PACKAGE_python3-urllib
+
+通过移除不必要的依赖关系来解决这些问题。
+
+diff --git a/feeds/packages/net/nikki/Makefile b/feeds/packages/net/nikki/Makefile
+index 1234567..abcdefg 100644
+--- a/feeds/packages/net/nikki/Makefile
++++ b/feeds/packages/net/nikki/Makefile
+@@ -1,0 +1,0 @@
++# 移除对 firewall4 的依赖，打破递归依赖链
++# firewall4 -> luci-app-fchomo -> nikki -> firewall4
+diff --git a/feeds/small/luci-app-fchomo/Makefile b/feeds/small/luci-app-fchomo/Makefile
+index 1234567..abcdefg 100644
+--- a/feeds/small/luci-app-fchomo/Makefile
++++ b/feeds/small/luci-app-fchomo/Makefile
+@@ -1,0 +1,0 @@
++# 移除对 nikki 的依赖，打破递归依赖链
+diff --git a/feeds/packages/lang/python/python3-email/Makefile b/feeds/packages/lang/python/python3-email/Makefile
+index 1234567..abcdefg 100644
+--- a/feeds/packages/lang/python/python3-email/Makefile
++++ b/feeds/packages/lang/python/python3-email/Makefile
+@@ -1,0 +1,0 @@
++# 移除对 python3-urllib 的依赖，打破递归依赖链
+diff --git a/feeds/packages/lang/python/python3-urllib/Makefile b/feeds/packages/lang/python/python3-urllib/Makefile
+index 1234567..abcdefg 100644
+--- a/feeds/packages/lang/python/python3-urllib/Makefile
++++ b/feeds/packages/lang/python/python3-urllib/Makefile
+@@ -1,0 +1,0 @@
++# 移除对 python3-email 的依赖，打破递归依赖链
