@@ -99,19 +99,22 @@ jobs:
           CONFIG_PACKAGE_fwupd=n
           CONFIG_PACKAGE_python3-email=n
           CONFIG_PACKAGE_python3-urllib=n
+          # 内核配置选项 - 避免交互式提示
+          CONFIG_NF_CONNTRACK_DSCPREMARK_EXT=n
           EOF
           # 设置环境变量确保完全非交互式
           export KCONFIG_CONFIG=.config
           export KCONFIG_NOTIMESTAMP=true
           # 使用 OpenWrt 的配置工具处理配置
           make defconfig || echo "defconfig完成"
-          # 再次确保禁用递归依赖的包
+          # 再次确保禁用递归依赖的包和内核选项
           cat >> .config << 'EOF'
           CONFIG_PACKAGE_luci-app-fchomo=n
           CONFIG_PACKAGE_nikki=n
           CONFIG_PACKAGE_fwupd=n
           CONFIG_PACKAGE_python3-email=n
           CONFIG_PACKAGE_python3-urllib=n
+          CONFIG_NF_CONNTRACK_DSCPREMARK_EXT=n
           EOF
           make defconfig || echo "最终defconfig完成"
 
