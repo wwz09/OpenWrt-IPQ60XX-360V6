@@ -105,6 +105,7 @@ jobs:
           # 设置环境变量确保完全非交互式
           export KCONFIG_CONFIG=.config
           export KCONFIG_NOTIMESTAMP=true
+          export KCONFIG_AUTOCONFIG=1
           # 使用 OpenWrt 的配置工具处理配置
           make defconfig || echo "defconfig完成"
           # 再次确保禁用递归依赖的包和内核选项
@@ -117,6 +118,11 @@ jobs:
           CONFIG_NF_CONNTRACK_DSCPREMARK_EXT=n
           EOF
           make defconfig || echo "最终defconfig完成"
+          # 为内核编译添加非交互式处理
+          echo "export KCONFIG_AUTOCONFIG=1" >> .profile
+          echo "export KCONFIG_NOTIMESTAMP=true" >> .profile
+          echo "export KCONFIG_CONFIG=.config" >> .profile
+          source .profile
 
       - name: Download Packages
         run: |
