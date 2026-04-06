@@ -277,6 +277,9 @@ awk '/^CONFIG_/ {print $1}' .config > include/config/auto.conf
 # 生成 auto.conf.cmd 文件
 touch include/config/auto.conf.cmd
 
+# 运行 defconfig 来验证和更新配置，避免 menuconfig
+make defconfig
+
 if grep -qE "^CONFIG_TARGET_x86_64=y" "$CONFIG_FILE"; then
     DISTFEEDS_PATH="$BASE_PATH/../$BUILD_DIR/package/emortal/default-settings/files/99-distfeeds.conf"
     if [ -d "${DISTFEEDS_PATH%/*}" ] && [ -f "$DISTFEEDS_PATH" ]; then
