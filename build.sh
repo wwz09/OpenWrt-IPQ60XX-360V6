@@ -291,6 +291,15 @@ remove_uhttpd_dependency
 
 cd "$BASE_PATH/../$BUILD_DIR"
 
+# 安装必要的系统依赖
+echo "============================================"
+echo "安装必要的系统依赖"
+echo "============================================"
+if command -v apt-get &> /dev/null; then
+    sudo apt-get update -y
+    sudo apt-get install -y ruby libev-dev lm-sensors libpam-dev libtirpc-dev liblzma-dev libzstd-dev libnetsnmp-dev libglib2.0-dev libgpiod-dev
+fi
+
 # 清理构建环境
 echo "============================================"
 echo "清理构建环境"
@@ -309,6 +318,8 @@ echo "export KCONFIG_NOTIMESTAMP=true" >> .profile
 echo "export KCONFIG_CONFIG=.config" >> .profile
 source .profile
 
+# 避免使用 menuconfig，直接使用 defconfig
+export TERM=dumb
 make defconfig
 
 if [[ $Build_Mod == "debug" ]]; then
