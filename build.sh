@@ -318,9 +318,10 @@ echo "export KCONFIG_NOTIMESTAMP=true" >> .profile
 echo "export KCONFIG_CONFIG=.config" >> .profile
 echo "export TERM=dumb" >> .profile
 echo "export CONFIG_SILENT=y" >> .profile
+echo "export DEBIAN_FRONTEND=noninteractive" >> .profile
 source .profile
 
-# 避免使用 menuconfig，使用 olddefconfig 替代
+# 完全绕过 menuconfig，直接使用配置文件
 export TERM=dumb
 export KCONFIG_AUTOCONFIG=1
 export KCONFIG_NOTIMESTAMP=true
@@ -328,11 +329,25 @@ export KCONFIG_CONFIG=.config
 export CONFIG_SILENT=y
 export DEBIAN_FRONTEND=noninteractive
 
-# 直接使用配置文件，不调用 menuconfig
+# 直接复制配置文件，不使用任何可能调用 menuconfig 的命令
 cp .config .config.tmp
 
-# 使用 olddefconfig 而不是 silentoldconfig，避免 menuconfig 调用
-make olddefconfig
+# 检查配置文件是否存在
+if [ ! -f ".config" ]; then
+    echo "错误：配置文件 .config 不存在"
+    exit 1
+fi
+
+echo "配置文件已准备就绪，跳过 menuconfig 调用"
+
+# 手动创建必要的配置文件目录
+mkdir -p include/config
+
+# 生成 auto.conf 文件（menuconfig 的替代方案）
+awk '/^CONFIG_/ {print $1}' .config > include/config/auto.conf
+
+# 生成 auto.conf.cmd 文件
+touch include/config/auto.conf.cmd
 
 if [[ $Build_Mod == "debug" ]]; then
     exit 0
