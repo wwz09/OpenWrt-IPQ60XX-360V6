@@ -60,50 +60,36 @@ fi
 # ==================== 添加自定义软件包 ====================
 echo "添加自定义软件包..."
 
+# 克隆主题（添加错误处理）
+clone_repo() {
+    local repo_url=$1
+    local target_dir=$2
+    local branch=${3:-master}
+    local desc=$4
+    
+    [ -d "$target_dir" ] && rm -rf "$target_dir"
+    echo "正在克隆 $desc..."
+    if git clone --depth 1 -b "$branch" "$repo_url" "$target_dir" 2>/dev/null; then
+        echo "✓ $desc 克隆完成"
+        return 0
+    else
+        echo "⚠️ $desc 克隆失败，跳过"
+        return 1
+    fi
+}
+
 # 克隆主题
-[ -d "package/luci-theme-argon" ] && rm -rf package/luci-theme-argon
-git clone -b master https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
-echo "✓ Argon主题克隆完成"
+clone_repo "https://github.com/jerrykuku/luci-theme-argon.git" "package/luci-theme-argon" "master" "Argon主题"
+clone_repo "https://github.com/jerrykuku/luci-app-argon-config.git" "package/luci-app-argon-config" "master" "Argon配置"
+clone_repo "https://github.com/gngpp/luci-theme-design.git" "package/luci-theme-design" "master" "Design主题"
+clone_repo "https://github.com/gngpp/luci-app-design-config.git" "package/luci-app-design-config" "master" "Design配置"
+clone_repo "https://github.com/LuttyYang/luci-theme-material.git" "package/luci-theme-material" "master" "Material主题"
 
-# 克隆Argon配置
-[ -d "package/luci-app-argon-config" ] && rm -rf package/luci-app-argon-config
-git clone https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
-echo "✓ Argon配置克隆完成"
-
-# 克隆Design主题
-[ -d "package/luci-theme-design" ] && rm -rf package/luci-theme-design
-git clone https://github.com/gngpp/luci-theme-design.git package/luci-theme-design
-echo "✓ Design主题克隆完成"
-
-# 克隆Design配置
-[ -d "package/luci-app-design-config" ] && rm -rf package/luci-app-design-config
-git clone https://github.com/gngpp/luci-app-design-config.git package/luci-app-design-config
-echo "✓ Design配置克隆完成"
-
-# 克隆Aurora主题
-[ -d "package/luci-theme-aurora" ] && rm -rf package/luci-theme-aurora
-git clone https://github.com/thinktip/luci-theme-aurora.git package/luci-theme-aurora
-echo "✓ Aurora主题克隆完成"
-
-# 克隆Aurora配置
-[ -d "package/luci-app-aurora-config" ] && rm -rf package/luci-app-aurora-config
-git clone https://github.com/thinktip/luci-app-aurora-config.git package/luci-app-aurora-config
-echo "✓ Aurora配置克隆完成"
-
-# 克隆Netgear主题
-[ -d "package/luci-theme-netgear" ] && rm -rf package/luci-theme-netgear
-git clone https://github.com/sirpdboy/luci-theme-netgear.git package/luci-theme-netgear
-echo "✓ Netgear主题克隆完成"
-
-# 克隆Material主题
-[ -d "package/luci-theme-material" ] && rm -rf package/luci-theme-material
-git clone https://github.com/LuttyYang/luci-theme-material.git package/luci-theme-material
-echo "✓ Material主题克隆完成"
-
-# 克隆应用市场
-[ -d "package/luci-app-store" ] && rm -rf package/luci-app-store
-git clone https://github.com/linkease/luci-app-store.git package/luci-app-store
-echo "✓ 应用市场克隆完成"
+# 跳过容易失败的仓库
+# clone_repo "https://github.com/thinktip/luci-theme-aurora.git" "package/luci-theme-aurora" "master" "Aurora主题"
+# clone_repo "https://github.com/thinktip/luci-app-aurora-config.git" "package/luci-app-aurora-config" "master" "Aurora配置"
+# clone_repo "https://github.com/sirpdboy/luci-theme-netgear.git" "package/luci-theme-netgear" "master" "Netgear主题"
+# clone_repo "https://github.com/linkease/luci-app-store.git" "package/luci-app-store" "master" "应用市场"
 
 echo "============================================"
 echo "DIY Part 1 脚本执行完成"

@@ -291,6 +291,13 @@ remove_uhttpd_dependency
 
 cd "$BASE_PATH/../$BUILD_DIR"
 
+# 清理构建环境
+echo "============================================"
+echo "清理构建环境"
+echo "============================================"
+make clean
+rm -rf build_dir/* staging_dir/* tmp/* logs/*
+
 # 设置环境变量确保完全非交互式
 export KCONFIG_CONFIG=.config
 export KCONFIG_NOTIMESTAMP=true
@@ -314,7 +321,8 @@ if [[ -d $TARGET_DIR ]]; then
 fi
 
 make download -j$(($(nproc) * 2))
-make -j$(($(nproc) + 1)) || make -j1 V=s
+# 使用单线程构建，便于排查错误
+make -j1 V=s
 
 FIRMWARE_DIR="$BASE_PATH/../firmware"
 \rm -rf "$FIRMWARE_DIR"
