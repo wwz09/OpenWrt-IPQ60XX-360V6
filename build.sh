@@ -317,17 +317,22 @@ echo "export KCONFIG_AUTOCONFIG=1" >> .profile
 echo "export KCONFIG_NOTIMESTAMP=true" >> .profile
 echo "export KCONFIG_CONFIG=.config" >> .profile
 echo "export TERM=dumb" >> .profile
+echo "export CONFIG_SILENT=y" >> .profile
 source .profile
 
-# 避免使用 menuconfig，使用 silentoldconfig 替代
+# 避免使用 menuconfig，使用 olddefconfig 替代
 export TERM=dumb
 export KCONFIG_AUTOCONFIG=1
 export KCONFIG_NOTIMESTAMP=true
 export KCONFIG_CONFIG=.config
+export CONFIG_SILENT=y
+export DEBIAN_FRONTEND=noninteractive
 
 # 直接使用配置文件，不调用 menuconfig
 cp .config .config.tmp
-make silentoldconfig
+
+# 使用 olddefconfig 而不是 silentoldconfig，避免 menuconfig 调用
+make olddefconfig
 
 if [[ $Build_Mod == "debug" ]]; then
     exit 0
