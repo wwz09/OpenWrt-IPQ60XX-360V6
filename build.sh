@@ -228,9 +228,10 @@ if [[ -d action_build ]]; then
     BUILD_DIR="action_build"
 fi
 
-# 克隆代码（如果不存在）
-if [[ ! -d "$BASE_PATH/../$BUILD_DIR" ]]; then
+# 克隆代码（如果不存在或仓库URL不匹配）
+if [[ ! -d "$BASE_PATH/../$BUILD_DIR" ]] || [[ ! -d "$BASE_PATH/../$BUILD_DIR/.git" ]]; then
     echo "Cloning repository..."
+    rm -rf "$BASE_PATH/../$BUILD_DIR"
     if [[ -n "$REPO_BRANCH" ]]; then
         git clone -b "$REPO_BRANCH" "$REPO_URL" "$BASE_PATH/../$BUILD_DIR"
     else
@@ -241,6 +242,36 @@ if [[ ! -d "$BASE_PATH/../$BUILD_DIR" ]]; then
         git checkout "$COMMIT_HASH"
     fi
     cd "$BASE_PATH/.."
+else
+    # 检查当前仓库URL是否匹配
+    cd "$BASE_PATH/../$BUILD_DIR"
+    current_url=$(git remote get-url origin 2>/dev/null || echo "")
+    if [[ "$current_url" != "$REPO_URL" ]]; then
+        echo "Repository URL changed, re-cloning..."
+        cd "$BASE_PATH/.."
+        rm -rf "$BUILD_DIR"
+        if [[ -n "$REPO_BRANCH" ]]; then
+            git clone -b "$REPO_BRANCH" "$REPO_URL" "$BUILD_DIR"
+        else
+            git clone "$REPO_URL" "$BUILD_DIR"
+        fi
+        cd "$BUILD_DIR"
+        if [[ "$COMMIT_HASH" != "none" ]]; then
+            git checkout "$COMMIT_HASH"
+        fi
+        cd "$BASE_PATH/.."
+    else
+        # 检查分支是否匹配
+        current_branch=$(git branch --show-current 2>/dev/null || echo "")
+        if [[ -n "$REPO_BRANCH" && "$current_branch" != "$REPO_BRANCH" ]]; then
+            echo "Branch changed, switching to $REPO_BRANCH..."
+            git checkout "$REPO_BRANCH"
+            if [[ "$COMMIT_HASH" != "none" ]]; then
+                git checkout "$COMMIT_HASH"
+            fi
+        fi
+        cd "$BASE_PATH/.."
+    fi
 fi
 
 # 执行 DIY 脚本
