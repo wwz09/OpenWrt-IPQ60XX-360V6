@@ -219,7 +219,7 @@ EOF
 
 REPO_URL=$(read_ini_by_key "REPO_URL")
 REPO_BRANCH=$(read_ini_by_key "REPO_BRANCH")
-REPO_BRANCH=${REPO_BRANCH:-main}
+REPO_BRANCH=${REPO_BRANCH:-}
 BUILD_DIR=$(read_ini_by_key "BUILD_DIR")
 COMMIT_HASH=$(read_ini_by_key "COMMIT_HASH")
 COMMIT_HASH=${COMMIT_HASH:-none}
@@ -231,9 +231,12 @@ fi
 # 克隆代码（如果不存在）
 if [[ ! -d "$BASE_PATH/../$BUILD_DIR" ]]; then
     echo "Cloning repository..."
-    git clone "$REPO_URL" "$BASE_PATH/../$BUILD_DIR"
+    if [[ -n "$REPO_BRANCH" ]]; then
+        git clone -b "$REPO_BRANCH" "$REPO_URL" "$BASE_PATH/../$BUILD_DIR"
+    else
+        git clone "$REPO_URL" "$BASE_PATH/../$BUILD_DIR"
+    fi
     cd "$BASE_PATH/../$BUILD_DIR"
-    git checkout "$REPO_BRANCH"
     if [[ "$COMMIT_HASH" != "none" ]]; then
         git checkout "$COMMIT_HASH"
     fi
