@@ -296,9 +296,10 @@ if [[ -d $TARGET_DIR ]]; then
     find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec rm -f {} +
 fi
 
-make download -j$(($(nproc) * 2))
-# 使用单线程构建，便于排查错误
-make -j1 V=s
+# 执行下载，添加 KCONFIG 相关参数避免 menuconfig
+make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y download -j$(($(nproc) * 2))
+# 使用单线程构建，便于排查错误，同样添加参数避免 menuconfig
+make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y -j1 V=s
 
 FIRMWARE_DIR="$BASE_PATH/../firmware"
 \rm -rf "$FIRMWARE_DIR"
