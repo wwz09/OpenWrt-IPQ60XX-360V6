@@ -31,7 +31,7 @@ collect_supported_devs() {
 
         dev_key=$(basename "$ini_file" .ini)
         if [[ -f "$BASE_PATH/deconfig/$dev_key.config" ]]; then
-            SUPPORTED_DEVS+=($dev_key)
+            SUPPORTED_DEVS+=("$dev_key")
         fi
     done
 
@@ -175,51 +175,24 @@ remove_uhttpd_dependency() {
     fi
 }
 
-fix_recursive_dependencies() {
-    local build_dir="$BASE_PATH/../$BUILD_DIR"
-    
-    # 1. 修复 nikki -> firewall4 依赖
-    if [ -f "$build_dir/feeds/packages/net/nikki/Makefile" ]; then
-        sed -i 's/DEPENDS.*+firewall4/DEPENDS:=/g' "$build_dir/feeds/packages/net/nikki/Makefile"
-        echo "已修复 nikki 的依赖"
-    fi
-    
-    # 2. 修复 luci-app-fchomo -> nikki 依赖
-    if [ -f "$build_dir/feeds/small/luci-app-fchomo/Makefile" ]; then
-        sed -i 's/DEPENDS.*+nikki/DEPENDS:=/g' "$build_dir/feeds/small/luci-app-fchomo/Makefile"
-        echo "已修复 luci-app-fchomo 的依赖"
-    fi
-    
-    # 3. 修复 python3-email <-> python3-urllib 依赖
-    if [ -f "$build_dir/feeds/packages/lang/python/python3-email/Makefile" ]; then
-        sed -i 's/DEPENDS.*+python3-urllib/DEPENDS:=/g' "$build_dir/feeds/packages/lang/python/python3-email/Makefile"
-        echo "已修复 python3-email 的依赖"
-    fi
-    if [ -f "$build_dir/feeds/packages/lang/python/python3-urllib/Makefile" ]; then
-        sed -i 's/DEPENDS.*+python3-email/DEPENDS:=/g' "$build_dir/feeds/packages/lang/python/python3-urllib/Makefile"
-        echo "已修复 python3-urllib 的依赖"
-    fi
-}
-
 apply_config() {
     \cp -f "$CONFIG_FILE" "$BASE_PATH/../$BUILD_DIR/.config"
     
-    # 强制禁用导致递归依赖的包
-    cat >> "$BASE_PATH/../$BUILD_DIR/.config" << 'EOF'
-# 禁用递归依赖的包
-CONFIG_PACKAGE_luci-app-fchomo=n
-CONFIG_PACKAGE_nikki=n
-CONFIG_PACKAGE_fwupd=n
-CONFIG_PACKAGE_python3-email=n
-CONFIG_PACKAGE_python3-urllib=n
-# 内核配置选项 - 避免交互式提示
-CONFIG_NF_CONNTRACK_DSCPREMARK_EXT=n
-EOF
+    if grep -qE "(ipq60xx|ipq807x)" "$BASE_PATH/../$BUILD_DIR/.config" &&
+        ! grep -q "CONFIG_GIT_MIRROR" "$BASE_PATH/../$BUILD_DIR/.config"; then
+        cat "$BASE_PATH/deconfig/nss.config" >> "$BASE_PATH/../$BUILD_DIR/.config"
+    fi
+
+    cat "$BASE_PATH/deconfig/compile_base.config" >> "$BASE_PATH/../$BUILD_DIR/.config"
+
+    cat "$BASE_PATH/deconfig/docker_deps.config" >> "$BASE_PATH/../$BUILD_DIR/.config"
+
+    cat "$BASE_PATH/deconfig/proxy.config" >> "$BASE_PATH/../$BUILD_DIR/.config"
 }
 
 REPO_URL=$(read_ini_by_key "REPO_URL")
 REPO_BRANCH=$(read_ini_by_key "REPO_BRANCH")
-REPO_BRANCH=${REPO_BRANCH:-}
+REPO_BRANCH=${REPO_BRANCH:-main}
 BUILD_DIR=$(read_ini_by_key "BUILD_DIR")
 COMMIT_HASH=$(read_ini_by_key "COMMIT_HASH")
 COMMIT_HASH=${COMMIT_HASH:-none}
@@ -228,51 +201,7 @@ if [[ -d action_build ]]; then
     BUILD_DIR="action_build"
 fi
 
-# 克隆代码（如果不存在或仓库URL不匹配）
-if [[ ! -d "$BASE_PATH/../$BUILD_DIR" ]] || [[ ! -d "$BASE_PATH/../$BUILD_DIR/.git" ]]; then
-    echo "Cloning repository..."
-    rm -rf "$BASE_PATH/../$BUILD_DIR"
-    if [[ -n "$REPO_BRANCH" ]]; then
-        git clone -b "$REPO_BRANCH" "$REPO_URL" "$BASE_PATH/../$BUILD_DIR"
-    else
-        git clone "$REPO_URL" "$BASE_PATH/../$BUILD_DIR"
-    fi
-    cd "$BASE_PATH/../$BUILD_DIR"
-    if [[ "$COMMIT_HASH" != "none" ]]; then
-        git checkout "$COMMIT_HASH"
-    fi
-    cd "$BASE_PATH/.."
-else
-    # 检查当前仓库URL是否匹配
-    cd "$BASE_PATH/../$BUILD_DIR"
-    current_url=$(git remote get-url origin 2>/dev/null || echo "")
-    if [[ "$current_url" != "$REPO_URL" ]]; then
-        echo "Repository URL changed, re-cloning..."
-        cd "$BASE_PATH/.."
-        rm -rf "$BUILD_DIR"
-        if [[ -n "$REPO_BRANCH" ]]; then
-            git clone -b "$REPO_BRANCH" "$REPO_URL" "$BUILD_DIR"
-        else
-            git clone "$REPO_URL" "$BUILD_DIR"
-        fi
-        cd "$BUILD_DIR"
-        if [[ "$COMMIT_HASH" != "none" ]]; then
-            git checkout "$COMMIT_HASH"
-        fi
-        cd "$BASE_PATH/.."
-    else
-        # 检查分支是否匹配
-        current_branch=$(git branch --show-current 2>/dev/null || echo "")
-        if [[ -n "$REPO_BRANCH" && "$current_branch" != "$REPO_BRANCH" ]]; then
-            echo "Branch changed, switching to $REPO_BRANCH..."
-            git checkout "$REPO_BRANCH"
-            if [[ "$COMMIT_HASH" != "none" ]]; then
-                git checkout "$COMMIT_HASH"
-            fi
-        fi
-        cd "$BASE_PATH/.."
-    fi
-fi
+"$BASE_PATH/update.sh" "$REPO_URL" "$REPO_BRANCH" "$BUILD_DIR" "$COMMIT_HASH"
 
 # 执行 DIY 脚本
 if [ -f "Scripts/diy-part1.sh" ]; then
@@ -286,7 +215,6 @@ if [ -f "Scripts/diy-part2.sh" ]; then
 fi
 
 apply_config
-fix_recursive_dependencies
 remove_uhttpd_dependency
 
 cd "$BASE_PATH/../$BUILD_DIR"
@@ -348,6 +276,13 @@ awk '/^CONFIG_/ {print $1}' .config > include/config/auto.conf
 
 # 生成 auto.conf.cmd 文件
 touch include/config/auto.conf.cmd
+
+if grep -qE "^CONFIG_TARGET_x86_64=y" "$CONFIG_FILE"; then
+    DISTFEEDS_PATH="$BASE_PATH/../$BUILD_DIR/package/emortal/default-settings/files/99-distfeeds.conf"
+    if [ -d "${DISTFEEDS_PATH%/*}" ] && [ -f "$DISTFEEDS_PATH" ]; then
+        sed -i 's/aarch64_cortex-a53/x86_64/g' "$DISTFEEDS_PATH"
+    fi
+fi
 
 if [[ $Build_Mod == "debug" ]]; then
     exit 0

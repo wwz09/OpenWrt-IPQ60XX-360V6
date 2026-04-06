@@ -1,0 +1,336 @@
+name: Build WRT
+run-name: Build - ${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        required: true
+        description: Device Model
+        type: choice
+        default: jdcloud_ipq60xx_immwrt
+        options:  
+          - cmcc_rax3000m_immwrt  
+          - jdcloud_ipq60xx_immwrt
+          - jdcloud_ipq60xx_libwrt
+          - qihoo_360v6_immwrt  
+          - zn_m2_immwrt
+          - zn_m2_libwrt
+  push:
+    branches:
+      - main
+    paths:
+      - 'wrt_core/**'
+      - 'build.sh'
+      - '.github/workflows/**'
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Free disk space and create SWAP
+        run: |
+          echo -e "\e[1;32mMemory:\e[0m"
+          free -h
+          echo -e "\e[1;32mStorage:\e[0m"
+          df -Th /
+          echo
+          
+          # 清理磁盘空间
+          sudo find /opt -mindepth 1 -maxdepth 1 ! -name "*runner*" -exec rm -rf {} \;
+          sudo rm -rf /usr/local/lib/android \
+           /usr/lib/google-cloud-sdk \
+           /usr/lib/jvm \
+           /usr/lib/{clang-16,clang-17,llvm-16,llvm-17} \
+           /usr/local/aws* \
+           /usr/local/julia* \
+           /usr/local/share/{chromium,powershell,vcpkg} \
+           /usr/share/dotnet \
+           /usr/share/swift
+          
+          # 清理并重新创建SWAP
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          echo "::group::  Create SWAP"
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          echo "::endgroup::"
+          
+          # 验证SWAP状态
+          free -h
+          
+          # 清理缓存
+          sudo sysctl -w vm.drop_caches=3
+
+      - name: Build System Setup
+        run: |
+          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          sudo -E apt -yqq install dos2unix
+          sudo -E apt -yqq install libfuse-dev
+          sudo -E apt -yqq autoremove --purge
+          sudo -E apt -yqq autoclean
+          sudo -E apt -yqq clean
+          sudo -E systemctl daemon-reload
+
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Set Build Date and Timezone
+        run: |
+          sudo -E timedatectl set-timezone "Asia/Shanghai"
+          export BUILD_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
+          echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_ENV
+
+      - name: Install yq
+        run: sudo apt-get install -y yq
+
+      - name: Read Release Config
+        run: |
+          # 读取配置文件
+          if [ -f "release_config.yml" ]; then
+            SOURCE_CODE=$(yq e '.release.source_code' release_config.yml)
+            KERNEL_VERSION=$(yq e '.release.kernel_version' release_config.yml)
+            WIFI_PASSWORD=$(yq e '.release.wifi_password' release_config.yml)
+            LAN_ADDRESS=$(yq e '.release.lan_address' release_config.yml)
+            
+            # 设置环境变量
+            echo "SOURCE_CODE=$SOURCE_CODE" >> $GITHUB_ENV
+            echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
+            echo "WIFI_PASSWORD=$WIFI_PASSWORD" >> $GITHUB_ENV
+            echo "LAN_ADDRESS=$LAN_ADDRESS" >> $GITHUB_ENV
+          else
+            # 使用默认值
+            echo "SOURCE_CODE=https://github.com/immortalwrt/immortalwrt.git" >> $GITHUB_ENV
+            echo "KERNEL_VERSION=6.6.126" >> $GITHUB_ENV
+            echo "WIFI_PASSWORD=abc5124937" >> $GITHUB_ENV
+            echo "LAN_ADDRESS=192.168.100.1" >> $GITHUB_ENV
+          fi
+
+      - name: Pre Clone
+        run: ./wrt_core/pre_clone_action.sh ${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }}
+
+      - name: Cache Dependencies
+        uses: actions/cache@v5.0.2
+        with:
+          path: |
+            ./action_build/.ccache
+            ./action_build/staging_dir
+          key: ${{ matrix.os }}-${{ hashFiles('**/repo_flag') }}-${{ env.BUILD_DATE }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ hashFiles('**/repo_flag') }}-
+
+      - name: Refresh the cache
+        run: |
+          if [ -d "./action_build/staging_dir" ]; then
+            find "./action_build/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r dir; do
+                find "$dir" -type f -exec touch {} +
+            done
+          fi
+
+      - name: Machine Information (Pre-build)
+        run: |
+          echo "=============== Pre-build Snapshot ==============="
+          echo "Time: $(date '+%F %T %Z')"
+          echo "Runner: ${RUNNER_NAME} (${RUNNER_OS}/${RUNNER_ARCH})"
+          echo "Kernel: $(uname -r)"
+          echo "Uptime: $(uptime -p)"
+          echo "=================================================="
+          echo "[CPU]"
+          lscpu | grep -E "Model name|Architecture|CPU\\(s\\)|Thread\\(s\\) per core|Core\\(s\\) per socket|CPU max MHz"
+          echo "=================================================="
+          echo "[Memory]"
+          free -h
+          echo "=================================================="
+          echo "[Disk]"
+          df -hT
+          echo "--------------------------------------------------"
+          df -hi
+          echo "=================================================="
+          echo "[Workspace]"
+          echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
+          du -sh "${GITHUB_WORKSPACE}" 2>/dev/null || true
+          du -sh ./action_build/.ccache 2>/dev/null || true
+          du -sh ./action_build/staging_dir 2>/dev/null || true
+          du -sh ./firmware 2>/dev/null || true
+          echo "=================================================="
+
+      - name: Build Firmware
+        run: ./build.sh ${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }}
+
+      - name: Generate Configuration Summary
+        run: |
+          # 创建firmware目录（如果不存在）
+          mkdir -p ./firmware
+          
+          # 输出配置文件到firmware目录
+          config_file=$(find ./action_build/bin/targets -name "*.config" 2>/dev/null | head -n 1)
+          if [ -n "$config_file" ]; then
+            cp "$config_file" ./firmware/config.txt
+            echo "已复制配置文件: $config_file -> ./firmware/config.txt"
+          else
+            echo "警告: 未找到配置文件" > ./firmware/config.txt
+          fi
+          
+          # 生成LUCI插件列表
+          {
+            echo "## 编译到固件的LUCI插件列表"
+            echo "生成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "设备型号: ${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }}"
+            echo ""
+            
+            # 优先从manifest文件获取插件信息
+            manifest_file=$(find ./firmware -name "*.manifest" 2>/dev/null | head -n 1)
+            if [ -n "$manifest_file" ]; then
+              echo "### 从固件清单中提取的插件（已安装到固件）:" 
+              echo ""
+              grep -oP "luci-app(-[a-zA-Z0-9_]{1,}){1,}" "$manifest_file" | sort | uniq
+              echo ""
+            fi
+            
+            # 同时从IPK文件获取可用插件列表
+            if [ -d "./action_build/bin/targets" ]; then
+              echo "### 编译生成的插件IPK包:" 
+              echo ""
+              find ./action_build/bin/targets -name "*.ipk" | grep -i luci | sed 's/.*\///' | sort
+            else
+              echo "未找到编译好的IPK包目录"
+            fi
+          } > ./firmware/luci_plugins.md
+          
+          # 批量重命名固件：移除"openwrt-qualcommax-"前缀
+          for file in ./firmware/*.*; do
+            # 只处理文件，不处理目录
+            [ -f "$file" ] || continue
+            
+            # 获取文件名（不含路径）
+            filename=$(basename "$file")
+            
+            # 跳过已生成的配置文件、插件列表和校验文件
+            if [[ "$filename" == "config.txt" || "$filename" == "luci_plugins.md" || "$filename" == "sha256sums.txt" ]]; then
+              continue
+            fi
+            
+            # 检查文件名是否包含需要移除的前缀
+            if [[ "$filename" == openwrt-qualcommax-* ]]; then
+              # 移除"openwrt-qualcommax-"前缀
+              new_filename="${filename#openwrt-qualcommax-}"
+              new_name="./firmware/$new_filename"
+              
+              # 避免文件覆盖（如果目标文件已存在，添加数字后缀）
+              if [ -e "$new_name" ] && [ "$file" != "$new_name" ]; then
+                # 获取扩展名
+                extension="${new_filename##*.}"
+                # 获取不含扩展名的部分
+                name_without_ext="${new_filename%.*}"
+                counter=1
+                while [ -e "./firmware/${name_without_ext}_${counter}.${extension}" ]; do
+                  counter=$((counter + 1))
+                done
+                new_name="./firmware/${name_without_ext}_${counter}.${extension}"
+                new_filename="${name_without_ext}_${counter}.${extension}"
+              fi
+              
+              # 执行重命名
+              if [ "$file" != "$new_name" ]; then
+                mv "$file" "$new_name"
+                echo "重命名固件: $filename -> $new_filename"
+              fi
+            else
+              echo "跳过文件（无前缀）: $filename"
+            fi
+          done
+          
+          # 生成SHA256校验文件
+          echo "生成SHA256校验文件..."
+          cd ./firmware
+          sha256sum *.* > sha256sums.txt 2>/dev/null || echo "警告: 生成校验文件失败"
+          cd ..
+          echo "校验文件已生成: ./firmware/sha256sums.txt"
+          
+          # 输出固件清单
+          echo "=============================================="
+          echo "发布文件清单:"
+          ls -lh ./firmware/
+          echo "=============================================="
+
+      - name: Delete Old Cache
+        run: |
+          # 获取缓存列表并删除
+          gh cache list --key ${{ matrix.os }}-${{ hashFiles('**/repo_flag') }}- --json key --jq '.[] | .key' | while read -r key; do
+            gh cache delete "$key"
+          done
+          # 输出缓存状态
+          echo "========cache status========"
+          echo "ccache: $(du -sh ./action_build/.ccache | cut -f 1)"
+          echo "staging: $(du -sh ./action_build/staging_dir | cut -f 1)"
+
+      - name: Machine Information (Post-build)
+        run: |
+          echo "=============== Post-build Snapshot ==============="
+          echo "Time: $(date '+%F %T %Z')"
+          echo "Runner: ${RUNNER_NAME} (${RUNNER_OS}/${RUNNER_ARCH})"
+          echo "Kernel: $(uname -r)"
+          echo "Uptime: $(uptime -p)"
+          echo "===================================================="
+          echo "[CPU]"
+          lscpu | grep -E "Model name|Architecture|CPU\\(s\\)|Thread\\(s\\) per core|Core\\(s\\) per socket|CPU max MHz"
+          echo "===================================================="
+          echo "[Memory]"
+          free -h
+          echo "===================================================="
+          echo "[Disk]"
+          df -hT
+          echo "----------------------------------------------------"
+          df -hi
+          echo "===================================================="
+          echo "[Build Outputs]"
+          du -sh ./action_build/.ccache 2>/dev/null || true
+          du -sh ./action_build/staging_dir 2>/dev/null || true
+          du -sh ./firmware 2>/dev/null || true
+          echo "Firmware file count: $(ls -1 ./firmware 2>/dev/null | wc -l)"
+          echo "===================================================="
+
+      - name: Upload Firmware
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.BUILD_DATE }}_${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }}
+          path: ./firmware/*.*
+          retention-days: 90
+
+      - name: Prepare Release Body
+        run: |
+          echo "云编译发布" > release_body.txt
+          echo "源码: ${{ env.SOURCE_CODE }}" >> release_body.txt
+          echo "Kernel: ${{ env.KERNEL_VERSION }}" >> release_body.txt
+          echo "WiFi密码: ${{ env.WIFI_PASSWORD }}" >> release_body.txt
+          echo "LAN地址: ${{ env.LAN_ADDRESS }}" >> release_body.txt
+          echo "插件: " >> release_body.txt
+          
+          # 从固件清单中提取插件信息
+          manifest_file=$(find ./firmware -name "*.manifest" 2>/dev/null | head -n 1)
+          if [ -n "$manifest_file" ]; then
+            grep -oP "luci-app(-[a-zA-Z0-9_]{1,}){1,}" "$manifest_file" | sort | uniq | awk '{print "            " $0}' >> release_body.txt
+          else
+            echo "            未找到插件信息" >> release_body.txt
+          fi
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ env.BUILD_DATE }}_${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }}
+          name: Firmware ${{ inputs.model || 'jdcloud_ipq60xx_immwrt' }} - ${{ env.BUILD_DATE }}
+          body_path: release_body.txt
+          artifacts: ./firmware/*.*
+          draft: false
+          prerelease: false
+          allowUpdates: true
