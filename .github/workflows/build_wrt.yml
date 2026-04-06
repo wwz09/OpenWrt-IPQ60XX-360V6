@@ -118,6 +118,7 @@ jobs:
       - name: Set Execution Permissions
         run: |
           chmod +x ./wrt_core/pre_clone_action.sh
+          chmod +x ./wrt_core/update.sh
           chmod +x ./build.sh
 
       - name: Pre Clone
