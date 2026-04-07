@@ -239,6 +239,11 @@ rm -rf build_dir/* staging_dir/* tmp/* logs/*
 export KCONFIG_CONFIG=.config
 export KCONFIG_NOTIMESTAMP=true
 export KCONFIG_AUTOCONFIG=1
+export TERM=dumb
+export CONFIG_SILENT=y
+export DEBIAN_FRONTEND=noninteractive
+export FORCE_UNSAFE_CONFIGURE=1
+export NO_COLOR=1
 
 # 为内核编译添加非交互式处理
 echo "export KCONFIG_AUTOCONFIG=1" >> .profile
@@ -247,6 +252,8 @@ echo "export KCONFIG_CONFIG=.config" >> .profile
 echo "export TERM=dumb" >> .profile
 echo "export CONFIG_SILENT=y" >> .profile
 echo "export DEBIAN_FRONTEND=noninteractive" >> .profile
+echo "export FORCE_UNSAFE_CONFIGURE=1" >> .profile
+echo "export NO_COLOR=1" >> .profile
 source .profile
 
 # 完全绕过 menuconfig，直接使用配置文件
@@ -256,6 +263,8 @@ export KCONFIG_NOTIMESTAMP=true
 export KCONFIG_CONFIG=.config
 export CONFIG_SILENT=y
 export DEBIAN_FRONTEND=noninteractive
+export FORCE_UNSAFE_CONFIGURE=1
+export NO_COLOR=1
 
 # 直接复制配置文件，不使用任何可能调用 menuconfig 的命令
 cp .config .config.tmp
@@ -277,9 +286,15 @@ awk '/^CONFIG_/ {print $1}' .config > include/config/auto.conf
 # 生成 auto.conf.cmd 文件
 touch include/config/auto.conf.cmd
 
+# 生成 .config.cmd 文件
+touch .config.cmd
+
 # 直接使用配置文件，完全绕过 menuconfig
 # 跳过 make defconfig，避免触发 menuconfig
- echo "配置文件已准备就绪，跳过所有配置步骤"
+echo "配置文件已准备就绪，跳过所有配置步骤"
+
+# 确保配置文件的时间戳是最新的
+touch .config include/config/auto.conf include/config/auto.conf.cmd .config.cmd
 
 if grep -qE "^CONFIG_TARGET_x86_64=y" "$CONFIG_FILE"; then
     DISTFEEDS_PATH="$BASE_PATH/../$BUILD_DIR/package/emortal/default-settings/files/99-distfeeds.conf"
@@ -300,8 +315,10 @@ fi
 # 执行下载，添加 KCONFIG 相关参数避免 menuconfig
 make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y DOWNLOAD_FOLDER=/tmp DL_DIR=/tmp download -j$(($(nproc) * 2))
 
-# 确保配置文件完整，使用 oldconfig 而非 menuconfig
-make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y OLDCONFIG_FLAGS=--silent oldconfig
+# 跳过 oldconfig，因为我们已经手动创建了所有必要的配置文件
+# 完全避免任何可能触发 menuconfig 的命令
+
+echo "跳过 oldconfig，使用手动创建的配置文件"
 
 # 使用单线程构建，便于排查错误，同样添加参数避免 menuconfig
 make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y -j1 V=s
