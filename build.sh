@@ -32,6 +32,7 @@ function show_help() {
     echo "  qihoo_360v6         360V6"
     echo "  xiaomi_ax1800       小米 AX1800"
     echo "  zn_m2               ZN M2"
+    echo "  cmcc_rax3000m_nand  CMCC RAX3000M (NAND 版本)"
     echo ""
 }
 

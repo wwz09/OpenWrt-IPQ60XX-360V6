@@ -20,6 +20,7 @@ jobs:
           - qihoo_360v6
           - xiaomi_ax1800
           - zn_m2
+          - cmcc_rax3000m_nand
     steps:
     - name: Checkout
       uses: actions/checkout@v3
