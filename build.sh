@@ -12,10 +12,13 @@ echo "========================================"
 # 检查环境
 if [ ! -d "openwrt" ]; then
     echo "克隆 LibWrt 源码..."
-    git clone https://github.com/LibWrt/LibWrt.git openwrt
+    git clone --depth 1 --single-branch -b main-nss https://github.com/LiBwrt/openwrt-6.x.git openwrt
+    cd openwrt
+else
+    echo "更新 LibWrt 源码..."
+    cd openwrt
+    git fetch && git reset --hard origin/main-nss
 fi
-
-cd openwrt
 
 # 运行自定义脚本第一部分
 echo "运行自定义脚本第一部分..."
