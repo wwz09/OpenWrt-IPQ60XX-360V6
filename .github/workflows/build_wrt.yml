@@ -42,7 +42,7 @@ jobs:
       run: ./build.sh -D ${{ matrix.device }}
 
     - name: Upload Artifacts for ${{ matrix.device }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: libwrt-firmware-${{ matrix.device }}
         path: openwrt/bin/targets/
