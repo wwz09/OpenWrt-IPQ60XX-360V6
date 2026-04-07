@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# OpenWrt 构建脚本
+# LibWrt 构建脚本
 # 作者：李杰
 
 set -e
 
 echo "========================================"
-echo "OpenWrt 构建脚本"
+echo "LibWrt 构建脚本"
 echo "========================================"
 
 # 检查环境
 if [ ! -d "openwrt" ]; then
-    echo "错误：未找到 openwrt 目录，请先克隆源码"
-    exit 1
+    echo "克隆 LibWrt 源码..."
+    git clone https://github.com/LibWrt/LibWrt.git openwrt
 fi
 
 cd openwrt

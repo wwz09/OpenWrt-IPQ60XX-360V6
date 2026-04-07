@@ -1,8 +1,8 @@
-# OpenWrt-IPQ60XX-360V6
+# LibWrt-IPQ60XX-360V6
 
 ## 项目简介
 
-这是一个为 IPQ60XX 芯片和 360V6 路由器定制的 OpenWrt 构建项目。
+这是一个为 IPQ60XX 芯片和 360V6 路由器定制的 LibWrt 构建项目。
 
 ## 支持的设备
 
@@ -12,8 +12,7 @@
 ## 构建步骤
 
 1. 克隆本仓库
-2. 克隆 OpenWrt 源码到 openwrt 目录
-3. 运行构建脚本：`./build.sh`
+2. 运行构建脚本：`./build.sh`（脚本会自动克隆 LibWrt 源码）
 
 ## 项目结构
 
