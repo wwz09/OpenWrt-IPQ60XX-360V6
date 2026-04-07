@@ -298,7 +298,11 @@ if [[ -d $TARGET_DIR ]]; then
 fi
 
 # 执行下载，添加 KCONFIG 相关参数避免 menuconfig
-make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y download -j$(($(nproc) * 2))
+make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y DOWNLOAD_FOLDER=/tmp DL_DIR=/tmp download -j$(($(nproc) * 2))
+
+# 确保配置文件完整，使用 oldconfig 而非 menuconfig
+make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y OLDCONFIG_FLAGS=--silent oldconfig
+
 # 使用单线程构建，便于排查错误，同样添加参数避免 menuconfig
 make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y -j1 V=s
 
