@@ -6,9 +6,6 @@
 # 配置调整
 echo "配置调整..."
 
-# 进入 openwrt 目录
-cd openwrt
-
 # 示例：修改默认 IP
 sed -i 's/192.168.1.1/192.168.5.1/g' package/base-files/files/bin/config_generate
 

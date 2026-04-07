@@ -7,8 +7,8 @@
 echo "克隆额外的包..."
 
 # 示例：克隆 luci-app-openclash
-git clone https://github.com/vernesong/OpenClash.git openwrt/package/luci-app-openclash
+git clone https://github.com/vernesong/OpenClash.git package/luci-app-openclash
 
 # 示例：克隆 luci-app-adguardhome
-git clone https://github.com/AdguardTeam/AdGuardHome.git openwrt/package/AdGuardHome
-git clone https://github.com/rufengsuixing/luci-app-adguardhome.git openwrt/package/luci-app-adguardhome
+git clone https://github.com/AdguardTeam/AdGuardHome.git package/AdGuardHome
+git clone https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
