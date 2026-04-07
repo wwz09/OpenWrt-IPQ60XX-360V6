@@ -311,6 +311,30 @@ if [ -f "Makefile" ]; then
     echo "KCONFIG_CONFIG := .config" >> .config.cmd
 fi
 
+# 创建假的 menuconfig 脚本，当构建系统尝试运行它时，它会简单地退出
+echo "创建假的 menuconfig 脚本..."
+if [ -d "scripts/config" ]; then
+    cat > scripts/config/mconf << 'EOF'
+#!/bin/sh
+# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 menuconfig，使用现有配置文件"
+exit 0
+EOF
+    chmod +x scripts/config/mconf
+    
+    # 同样创建假的 menuconfig 脚本
+    cat > scripts/config/menuconfig << 'EOF'
+#!/bin/sh
+# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 menuconfig，使用现有配置文件"
+exit 0
+EOF
+    chmod +x scripts/config/menuconfig
+fi
+
+# 确保配置文件的时间戳是最新的
+touch .config include/config/auto.conf include/config/auto.conf.cmd .config.cmd
+
 if grep -qE "^CONFIG_TARGET_x86_64=y" "$CONFIG_FILE"; then
     DISTFEEDS_PATH="$BASE_PATH/../$BUILD_DIR/package/emortal/default-settings/files/99-distfeeds.conf"
     if [ -d "${DISTFEEDS_PATH%/*}" ] && [ -f "$DISTFEEDS_PATH" ]; then
