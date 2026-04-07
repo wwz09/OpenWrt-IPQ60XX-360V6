@@ -296,6 +296,21 @@ echo "配置文件已准备就绪，跳过所有配置步骤"
 # 确保配置文件的时间戳是最新的
 touch .config include/config/auto.conf include/config/auto.conf.cmd .config.cmd
 
+# 确保配置文件存在且完整
+if [ ! -f ".config" ]; then
+    echo "错误：配置文件 .config 不存在"
+    exit 1
+fi
+
+# 生成 Makefile 依赖文件，避免构建系统自动调用 menuconfig
+echo "生成 Makefile 依赖文件..."
+if [ -f "Makefile" ]; then
+    # 手动创建 .config.cmd 文件，告诉构建系统配置已经完成
+    echo "# Automatically generated - do not edit!" > .config.cmd
+    echo "CONFIG_SHELL := /bin/sh" >> .config.cmd
+    echo "KCONFIG_CONFIG := .config" >> .config.cmd
+fi
+
 if grep -qE "^CONFIG_TARGET_x86_64=y" "$CONFIG_FILE"; then
     DISTFEEDS_PATH="$BASE_PATH/../$BUILD_DIR/package/emortal/default-settings/files/99-distfeeds.conf"
     if [ -d "${DISTFEEDS_PATH%/*}" ] && [ -f "$DISTFEEDS_PATH" ]; then
@@ -313,7 +328,7 @@ if [[ -d $TARGET_DIR ]]; then
 fi
 
 # 执行下载，添加 KCONFIG 相关参数避免 menuconfig
-make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y DOWNLOAD_FOLDER=/tmp DL_DIR=/tmp download -j$(($(nproc) * 2))
+make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y KCONFIG_NOHELP=1 KCONFIG_NOSAVECONFIG=1 KCONFIG_NOWARNING=1 DOWNLOAD_FOLDER=/tmp DL_DIR=/tmp download -j$(($(nproc) * 2))
 
 # 跳过 oldconfig，因为我们已经手动创建了所有必要的配置文件
 # 完全避免任何可能触发 menuconfig 的命令
@@ -321,7 +336,7 @@ make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y DOWNLOAD_FOLD
 echo "跳过 oldconfig，使用手动创建的配置文件"
 
 # 使用单线程构建，便于排查错误，同样添加参数避免 menuconfig
-make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y -j1 V=s
+make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y KCONFIG_NOHELP=1 KCONFIG_NOSAVECONFIG=1 KCONFIG_NOWARNING=1 -j1 V=s
 
 FIRMWARE_DIR="$BASE_PATH/../firmware"
 \rm -rf "$FIRMWARE_DIR"
