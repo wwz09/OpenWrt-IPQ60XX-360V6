@@ -354,12 +354,49 @@ if [[ -d $TARGET_DIR ]]; then
 fi
 
 # 执行下载，添加 KCONFIG 相关参数避免 menuconfig
+# 在执行make命令之前，重新创建假脚本，确保它们不会被覆盖
+echo "重新创建假脚本..."
+cat > scripts/config/mconf << 'EOF'
+#!/bin/sh
+# 假的 mconf 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 mconf，使用现有配置文件"
+exit 0
+EOF
+chmod +x scripts/config/mconf
+
+cat > scripts/config/menuconfig << 'EOF'
+#!/bin/sh
+# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 menuconfig，使用现有配置文件"
+exit 0
+EOF
+chmod +x scripts/config/menuconfig
+
+# 执行下载，添加 KCONFIG 相关参数避免 menuconfig
 make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y KCONFIG_NOHELP=1 KCONFIG_NOSAVECONFIG=1 KCONFIG_NOWARNING=1 DOWNLOAD_FOLDER=/tmp DL_DIR=/tmp download -j$(($(nproc) * 2))
 
 # 跳过 oldconfig，因为我们已经手动创建了所有必要的配置文件
 # 完全避免任何可能触发 menuconfig 的命令
 
 echo "跳过 oldconfig，使用手动创建的配置文件"
+
+# 在执行make命令之前，再次重新创建假脚本，确保它们不会被覆盖
+echo "再次重新创建假脚本..."
+cat > scripts/config/mconf << 'EOF'
+#!/bin/sh
+# 假的 mconf 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 mconf，使用现有配置文件"
+exit 0
+EOF
+chmod +x scripts/config/mconf
+
+cat > scripts/config/menuconfig << 'EOF'
+#!/bin/sh
+# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 menuconfig，使用现有配置文件"
+exit 0
+EOF
+chmod +x scripts/config/menuconfig
 
 # 使用单线程构建，便于排查错误，同样添加参数避免 menuconfig
 make KCONFIG_AUTOCONFIG=1 KCONFIG_NOTIMESTAMP=true CONFIG_SILENT=y KCONFIG_NOHELP=1 KCONFIG_NOSAVECONFIG=1 KCONFIG_NOWARNING=1 -j1 V=s
