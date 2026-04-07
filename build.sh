@@ -235,6 +235,29 @@ echo "============================================"
 make clean
 rm -rf build_dir/* staging_dir/* tmp/* logs/*
 
+# 提前创建 scripts/config 目录，确保假脚本的目录存在
+mkdir -p scripts/config
+
+# 创建假的 mconf 脚本，当构建系统尝试运行它时，它会简单地退出
+echo "创建假的 mconf 脚本..."
+cat > scripts/config/mconf << 'EOF'
+#!/bin/sh
+# 假的 mconf 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 mconf，使用现有配置文件"
+exit 0
+EOF
+chmod +x scripts/config/mconf
+
+# 同样创建假的 menuconfig 脚本
+echo "创建假的 menuconfig 脚本..."
+cat > scripts/config/menuconfig << 'EOF'
+#!/bin/sh
+# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
+echo "跳过 menuconfig，使用现有配置文件"
+exit 0
+EOF
+chmod +x scripts/config/menuconfig
+
 # 设置环境变量确保完全非交互式
 export KCONFIG_CONFIG=.config
 export KCONFIG_NOTIMESTAMP=true
@@ -309,27 +332,6 @@ if [ -f "Makefile" ]; then
     echo "# Automatically generated - do not edit!" > .config.cmd
     echo "CONFIG_SHELL := /bin/sh" >> .config.cmd
     echo "KCONFIG_CONFIG := .config" >> .config.cmd
-fi
-
-# 创建假的 menuconfig 脚本，当构建系统尝试运行它时，它会简单地退出
-echo "创建假的 menuconfig 脚本..."
-if [ -d "scripts/config" ]; then
-    cat > scripts/config/mconf << 'EOF'
-#!/bin/sh
-# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
-echo "跳过 menuconfig，使用现有配置文件"
-exit 0
-EOF
-    chmod +x scripts/config/mconf
-    
-    # 同样创建假的 menuconfig 脚本
-    cat > scripts/config/menuconfig << 'EOF'
-#!/bin/sh
-# 假的 menuconfig 脚本，用于在非交互式环境中避免终端错误
-echo "跳过 menuconfig，使用现有配置文件"
-exit 0
-EOF
-    chmod +x scripts/config/menuconfig
 fi
 
 # 确保配置文件的时间戳是最新的
