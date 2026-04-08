@@ -6,7 +6,6 @@
 set -e
 
 # 默认参数
-SOURCE_DIR="openwrt"
 DEFAULT_CONFIG="wrt_core/deconfig/jdcloud_re-ss-01.config"
 DEVICE_CONFIG=""
 THREADS=$(nproc)
@@ -71,6 +70,14 @@ done
 echo "========================================"
 echo "LibWrt 多设备构建脚本"
 echo "========================================"
+
+# 为每个设备使用独立的构建目录
+if [ -n "$DEVICE_CONFIG" ]; then
+    DEVICE_NAME=$(basename "$DEVICE_CONFIG" .config)
+    SOURCE_DIR="openwrt-${DEVICE_NAME}"
+else
+    SOURCE_DIR="openwrt"
+fi
 
 # 1. 管理源码
 if [ ! -d "$SOURCE_DIR" ]; then

@@ -46,4 +46,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: libwrt-firmware-${{ matrix.device }}
-        path: openwrt/bin/targets/
+        path: openwrt-${{ matrix.device }}/bin/targets/
