@@ -1,5 +1,3 @@
-# OpenWrt feeds 配置文件
-# 作者：李杰
 
 src-git nss_packages https://github.com/qosmio/nss-packages.git
 src-git sqm_scripts_nss https://github.com/qosmio/sqm-scripts-nss.git
