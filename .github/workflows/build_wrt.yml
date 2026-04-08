@@ -1,4 +1,4 @@
-name: Build LibWrt
+name: Build-LibWrt
 
 on:
   push:
