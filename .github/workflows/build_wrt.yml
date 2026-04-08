@@ -15,12 +15,13 @@ jobs:
       matrix:
         device:
           - jdcloud_re-ss-01
-          - link_nn6000-v1
-          - link_nn6000-v2
-          - qihoo_360v6
-          - xiaomi_ax1800
-          - zn_m2
-          - cmcc_rax3000m_nand
+          # 暂时只运行 jdcloud_re-ss-01 工作流
+          # - link_nn6000-v1
+          # - link_nn6000-v2
+          # - qihoo_360v6
+          # - xiaomi_ax1800
+          # - zn_m2
+          # - cmcc_rax3000m_nand
     steps:
     - name: Checkout
       uses: actions/checkout@v3
