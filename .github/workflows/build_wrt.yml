@@ -40,6 +40,16 @@ jobs:
         genisoimage msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip libpython3-dev qemu-utils \
         rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
 
+    - name: Cache Build Dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          openwrt-${{ matrix.device }}/dl
+          openwrt-${{ matrix.device }}/staging_dir
+        key: ${{ matrix.device }}-build-${{ hashFiles('feeds.conf.default', 'build.sh', 'Scripts/*.sh') }}
+        restore-keys: |
+          ${{ matrix.device }}-build-
+
     - name: Build LibWrt for ${{ matrix.device }}
       run: ./build.sh -D ${{ matrix.device }}
 

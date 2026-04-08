@@ -1,0 +1,4 @@
+﻿2026-04-08T06:30:31.0807980Z ##[group]Run chmod +x build.sh Scripts/*.sh
+2026-04-08T06:30:31.0808612Z [36;1mchmod +x build.sh Scripts/*.sh[0m
+2026-04-08T06:30:31.0834727Z shell: /usr/bin/bash -e {0}
+2026-04-08T06:30:31.0835230Z ##[endgroup]

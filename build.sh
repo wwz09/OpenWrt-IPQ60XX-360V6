@@ -8,7 +8,8 @@ set -e
 # 默认参数
 DEFAULT_CONFIG="wrt_core/deconfig/jdcloud_re-ss-01.config"
 DEVICE_CONFIG=""
-THREADS=$(nproc)
+# 限制并行编译线程为 2，减少内存使用
+THREADS=2
 
 # 显示帮助信息
 function show_help() {

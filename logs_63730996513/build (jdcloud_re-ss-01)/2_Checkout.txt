@@ -1,0 +1,123 @@
+﻿2026-04-08T06:30:30.7149351Z ##[group]Run actions/checkout@v3
+2026-04-08T06:30:30.7150134Z with:
+2026-04-08T06:30:30.7150541Z   repository: wwz09/OpenWrt-IPQ60XX-360V6
+2026-04-08T06:30:30.7151233Z   token: ***
+2026-04-08T06:30:30.7151620Z   ssh-strict: true
+2026-04-08T06:30:30.7152024Z   persist-credentials: true
+2026-04-08T06:30:30.7152461Z   clean: true
+2026-04-08T06:30:30.7152847Z   sparse-checkout-cone-mode: true
+2026-04-08T06:30:30.7153309Z   fetch-depth: 1
+2026-04-08T06:30:30.7153987Z   fetch-tags: false
+2026-04-08T06:30:30.7154364Z   lfs: false
+2026-04-08T06:30:30.7154719Z   submodules: false
+2026-04-08T06:30:30.7155107Z   set-safe-directory: true
+2026-04-08T06:30:30.7155725Z ##[endgroup]
+2026-04-08T06:30:30.8026764Z Syncing repository: wwz09/OpenWrt-IPQ60XX-360V6
+2026-04-08T06:30:30.8028507Z ##[group]Getting Git version info
+2026-04-08T06:30:30.8029305Z Working directory is '/home/runner/work/OpenWrt-IPQ60XX-360V6/OpenWrt-IPQ60XX-360V6'
+2026-04-08T06:30:30.8030344Z [command]/usr/bin/git version
+2026-04-08T06:30:30.8068497Z git version 2.53.0
+2026-04-08T06:30:30.8093826Z ##[endgroup]
+2026-04-08T06:30:30.8108959Z Temporarily overriding HOME='/home/runner/work/_temp/67843ac8-665a-46fd-b199-8d30ce5cdd90' before making global git config changes
+2026-04-08T06:30:30.8111151Z Adding repository directory to the temporary git global config as a safe directory
+2026-04-08T06:30:30.8113145Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/OpenWrt-IPQ60XX-360V6/OpenWrt-IPQ60XX-360V6
+2026-04-08T06:30:30.8144229Z Deleting the contents of '/home/runner/work/OpenWrt-IPQ60XX-360V6/OpenWrt-IPQ60XX-360V6'
+2026-04-08T06:30:30.8148207Z ##[group]Initializing the repository
+2026-04-08T06:30:30.8152272Z [command]/usr/bin/git init /home/runner/work/OpenWrt-IPQ60XX-360V6/OpenWrt-IPQ60XX-360V6
+2026-04-08T06:30:30.8211527Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-04-08T06:30:30.8213028Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-04-08T06:30:30.8214379Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-04-08T06:30:30.8215089Z hint: call:
+2026-04-08T06:30:30.8215447Z hint:
+2026-04-08T06:30:30.8215902Z hint: 	git config --global init.defaultBranch <name>
+2026-04-08T06:30:30.8216472Z hint:
+2026-04-08T06:30:30.8217062Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-04-08T06:30:30.8218338Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-04-08T06:30:30.8219013Z hint:
+2026-04-08T06:30:30.8219390Z hint: 	git branch -m <name>
+2026-04-08T06:30:30.8219813Z hint:
+2026-04-08T06:30:30.8220428Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-04-08T06:30:30.8221894Z Initialized empty Git repository in /home/runner/work/OpenWrt-IPQ60XX-360V6/OpenWrt-IPQ60XX-360V6/.git/
+2026-04-08T06:30:30.8223774Z [command]/usr/bin/git remote add origin https://github.com/wwz09/OpenWrt-IPQ60XX-360V6
+2026-04-08T06:30:30.8251263Z ##[endgroup]
+2026-04-08T06:30:30.8252004Z ##[group]Disabling automatic garbage collection
+2026-04-08T06:30:30.8254751Z [command]/usr/bin/git config --local gc.auto 0
+2026-04-08T06:30:30.8281267Z ##[endgroup]
+2026-04-08T06:30:30.8281962Z ##[group]Setting up auth
+2026-04-08T06:30:30.8286411Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-04-08T06:30:30.8312959Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-04-08T06:30:30.8595880Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-04-08T06:30:30.8622366Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-04-08T06:30:30.8849252Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-04-08T06:30:30.8881493Z ##[endgroup]
+2026-04-08T06:30:30.8882418Z ##[group]Fetching the repository
+2026-04-08T06:30:30.8889815Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +865788301e688e0b0dc684032f17153ce211008d:refs/remotes/origin/main
+2026-04-08T06:30:31.0310834Z remote: Enumerating objects: 31, done.        
+2026-04-08T06:30:31.0312462Z remote: Counting objects:   3% (1/31)        
+2026-04-08T06:30:31.0313131Z remote: Counting objects:   6% (2/31)        
+2026-04-08T06:30:31.0313985Z remote: Counting objects:   9% (3/31)        
+2026-04-08T06:30:31.0314542Z remote: Counting objects:  12% (4/31)        
+2026-04-08T06:30:31.0315086Z remote: Counting objects:  16% (5/31)        
+2026-04-08T06:30:31.0315616Z remote: Counting objects:  19% (6/31)        
+2026-04-08T06:30:31.0316157Z remote: Counting objects:  22% (7/31)        
+2026-04-08T06:30:31.0316689Z remote: Counting objects:  25% (8/31)        
+2026-04-08T06:30:31.0317253Z remote: Counting objects:  29% (9/31)        
+2026-04-08T06:30:31.0317810Z remote: Counting objects:  32% (10/31)        
+2026-04-08T06:30:31.0318360Z remote: Counting objects:  35% (11/31)        
+2026-04-08T06:30:31.0318904Z remote: Counting objects:  38% (12/31)        
+2026-04-08T06:30:31.0319740Z remote: Counting objects:  41% (13/31)        
+2026-04-08T06:30:31.0320657Z remote: Counting objects:  45% (14/31)        
+2026-04-08T06:30:31.0321864Z remote: Counting objects:  48% (15/31)        
+2026-04-08T06:30:31.0322669Z remote: Counting objects:  51% (16/31)        
+2026-04-08T06:30:31.0323344Z remote: Counting objects:  54% (17/31)        
+2026-04-08T06:30:31.0324251Z remote: Counting objects:  58% (18/31)        
+2026-04-08T06:30:31.0325063Z remote: Counting objects:  61% (19/31)        
+2026-04-08T06:30:31.0325907Z remote: Counting objects:  64% (20/31)        
+2026-04-08T06:30:31.0326525Z remote: Counting objects:  67% (21/31)        
+2026-04-08T06:30:31.0327118Z remote: Counting objects:  70% (22/31)        
+2026-04-08T06:30:31.0327656Z remote: Counting objects:  74% (23/31)        
+2026-04-08T06:30:31.0328188Z remote: Counting objects:  77% (24/31)        
+2026-04-08T06:30:31.0328738Z remote: Counting objects:  80% (25/31)        
+2026-04-08T06:30:31.0329286Z remote: Counting objects:  83% (26/31)        
+2026-04-08T06:30:31.0329819Z remote: Counting objects:  87% (27/31)        
+2026-04-08T06:30:31.0330622Z remote: Counting objects:  90% (28/31)        
+2026-04-08T06:30:31.0331417Z remote: Counting objects:  93% (29/31)        
+2026-04-08T06:30:31.0332337Z remote: Counting objects:  96% (30/31)        
+2026-04-08T06:30:31.0333056Z remote: Counting objects: 100% (31/31)        
+2026-04-08T06:30:31.0333857Z remote: Counting objects: 100% (31/31), done.        
+2026-04-08T06:30:31.0335078Z remote: Compressing objects:   4% (1/22)        
+2026-04-08T06:30:31.0335972Z remote: Compressing objects:   9% (2/22)        
+2026-04-08T06:30:31.0336847Z remote: Compressing objects:  13% (3/22)        
+2026-04-08T06:30:31.0337709Z remote: Compressing objects:  18% (4/22)        
+2026-04-08T06:30:31.0338584Z remote: Compressing objects:  22% (5/22)        
+2026-04-08T06:30:31.0339320Z remote: Compressing objects:  27% (6/22)        
+2026-04-08T06:30:31.0339878Z remote: Compressing objects:  31% (7/22)        
+2026-04-08T06:30:31.0340425Z remote: Compressing objects:  36% (8/22)        
+2026-04-08T06:30:31.0341023Z remote: Compressing objects:  40% (9/22)        
+2026-04-08T06:30:31.0341840Z remote: Compressing objects:  45% (10/22)        
+2026-04-08T06:30:31.0342563Z remote: Compressing objects:  50% (11/22)        
+2026-04-08T06:30:31.0343261Z remote: Compressing objects:  54% (12/22)        
+2026-04-08T06:30:31.0344024Z remote: Compressing objects:  59% (13/22)        
+2026-04-08T06:30:31.0344696Z remote: Compressing objects:  63% (14/22)        
+2026-04-08T06:30:31.0345577Z remote: Compressing objects:  68% (15/22)        
+2026-04-08T06:30:31.0346442Z remote: Compressing objects:  72% (16/22)        
+2026-04-08T06:30:31.0347601Z remote: Compressing objects:  77% (17/22)        
+2026-04-08T06:30:31.0348451Z remote: Compressing objects:  81% (18/22)        
+2026-04-08T06:30:31.0349677Z remote: Compressing objects:  86% (19/22)        
+2026-04-08T06:30:31.0350541Z remote: Compressing objects:  90% (20/22)        
+2026-04-08T06:30:31.0351421Z remote: Compressing objects:  95% (21/22)        
+2026-04-08T06:30:31.0352283Z remote: Compressing objects: 100% (22/22)        
+2026-04-08T06:30:31.0353212Z remote: Compressing objects: 100% (22/22), done.        
+2026-04-08T06:30:31.0354540Z remote: Total 31 (delta 5), reused 23 (delta 5), pack-reused 0 (from 0)        
+2026-04-08T06:30:31.0439039Z From https://github.com/wwz09/OpenWrt-IPQ60XX-360V6
+2026-04-08T06:30:31.0470664Z  * [new ref]         865788301e688e0b0dc684032f17153ce211008d -> origin/main
+2026-04-08T06:30:31.0473312Z ##[endgroup]
+2026-04-08T06:30:31.0474763Z ##[group]Determining the checkout info
+2026-04-08T06:30:31.0475924Z ##[endgroup]
+2026-04-08T06:30:31.0476829Z ##[group]Checking out the ref
+2026-04-08T06:30:31.0478513Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-04-08T06:30:31.0531662Z Switched to a new branch 'main'
+2026-04-08T06:30:31.0534292Z branch 'main' set up to track 'origin/main'.
+2026-04-08T06:30:31.0539707Z ##[endgroup]
+2026-04-08T06:30:31.0573025Z [command]/usr/bin/git log -1 --format='%H'
+2026-04-08T06:30:31.0597387Z '865788301e688e0b0dc684032f17153ce211008d'
