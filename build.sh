@@ -3,11 +3,8 @@
 # LibWrt 多设备构建脚本
 # 作者：李杰
 
-# 启用错误处理和调试输出
+# 启用错误处理
 set -e
-
-# 显示执行的命令
-set -x
 
 # 默认参数
 DEFAULT_CONFIG="wrt_core/deconfig/jdcloud_re-ss-01.config"
@@ -15,15 +12,13 @@ DEVICE_CONFIG=""
 # 限制并行编译线程为 1，最小化内存使用
 THREADS=1
 
-# 打印系统信息
+# 打印系统信息（精简）
 echo "========================================"
 echo "系统信息:"
 echo "========================================"
 echo "CPU 核心数: $(nproc)"
-echo "内存信息:"
-free -h
-echo "磁盘空间:"
-df -h
+echo "内存总量: $(free -h | grep Mem | awk '{print $2}')"
+echo "可用磁盘: $(df -h | grep /dev/sda1 | awk '{print $4}')"
 echo "========================================"
 
 # 显示帮助信息
@@ -156,29 +151,33 @@ fi
 echo "开始构建..."
 echo "========================================"
 echo "构建前内存使用:"
-free -h
+free -h | grep Mem
+
+# 尝试构建，只输出错误信息
+echo "开始编译..."
 echo "========================================"
 
-# 尝试构建，如果失败则显示诊断信息
-if make -j"$THREADS" V=s; then
+# 运行构建，捕获错误信息
+BUILD_OUTPUT=$(make -j"$THREADS" 2>&1)
+BUILD_STATUS=$?
+
+if [ $BUILD_STATUS -eq 0 ]; then
     echo "========================================"
     echo "构建完成！"
     echo "========================================"
 else
     echo "========================================"
-    echo "构建失败！显示诊断信息:"
+    echo "构建失败！显示错误信息:"
+    echo "========================================"
+    # 只显示错误信息
+    echo "$BUILD_OUTPUT" | grep -E "(error|Error|ERROR|failed|Failed|FAILED)"
     echo "========================================"
     echo "内存使用:"
-    free -h
+    free -h | grep Mem
     echo "磁盘空间:"
-    df -h
+    df -h | grep /dev/sda1
     echo "========================================"
-    echo "最后 100 行构建日志:"
-    echo "========================================"
-    # 如果有构建日志，显示最后部分
-    if [ -d "logs" ]; then
-        find logs -name "*.log" -type f -exec tail -100 {} \;
-    fi
+    echo "构建失败，请查看详细日志..."
     exit 1
 fi
 
