@@ -1,16 +1,57 @@
-name: Build-LibWrt
+# LibWrt 自动云编译工作流
+# 作者: 李杰
+# 功能: 编译多个设备的 LibWrt 固件
 
+name: Build LibWrt Firmware
+
+# 触发条件
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: '是否启用SSH调试 (true/false)'
+        required: false
+        default: 'false'
+        type: string
+  
+  # 定时触发 (每周日凌晨3点)
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 3 * * 0'
+  
+  # 代码推送触发
+  push:
+    branches:
+      - main
+    paths:
+      - 'wrt_core/deconfig/**'
+      - '.github/workflows/build_wrt.yml'
+      - 'build.sh'
+      - 'Scripts/**'
+
+# 权限配置
+permissions:
+  contents: write
+
+# 环境变量
+env:
+  # 源码仓库地址
+  REPO_URL: https://github.com/LiBwrt/openwrt-6.x
+  # 源码分支
+  REPO_BRANCH: main-nss
+  # 固件发布配置
+  RELEASE_TAG: LibWrt-AutoBuild-${{ github.run_number }}
+  RELEASE_NAME: LibWrt 自动编译固件 ${{ github.run_number }}
+  # 编译配置
+  TZ: Asia/Shanghai
+  FEEDS_CONF: feeds.conf.default
+  DIY_P1_SH: Scripts/diy-part1.sh
+  DIY_P2_SH: Scripts/diy-part2.sh
 
 jobs:
+  # 编译阶段
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -25,24 +66,37 @@ jobs:
           # - zn_m2
           # - cmcc_rax3000m_nand
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - name: 检出代码
+      uses: actions/checkout@v4
 
-    - name: Set Execution Permissions
+    - name: 设置执行权限
       run: chmod +x build.sh Scripts/*.sh
 
-    - name: Setup Environment
+    - name: 初始化编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo apt update -y
-        sudo apt full-upgrade -y
-        sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-        bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
-        git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
-        libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libfuse-dev libssl-dev libtool lrzsz \
-        genisoimage msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip libpython3-dev qemu-utils \
-        rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+        # 更新软件包列表
+        sudo apt-get update
+        # 安装编译依赖
+        sudo apt-get install -y \
+          ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+          bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
+          git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
+          libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
+          libpython3-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp ninja-build \
+          p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools python3-setuptools \
+          qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
+          vim wget xmlto xxd zlib1g-dev
+        # 清理
+        sudo apt-get clean
+        # 设置时区
+        sudo timedatectl set-timezone "$TZ"
+        # 设置git
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
 
-    - name: Cache Build Dependencies
+    - name: 缓存构建依赖
       uses: actions/cache@v3
       with:
         path: |
@@ -52,11 +106,154 @@ jobs:
         restore-keys: |
           ${{ matrix.device }}-build-
 
-    - name: Build LibWrt for ${{ matrix.device }}
-      run: ./build.sh -D ${{ matrix.device }}
+    - name: 构建 LibWrt 固件
+      id: compile
+      run: |
+        # 执行构建脚本
+        ./build.sh -D ${{ matrix.device }}
+        
+        # 获取编译结果信息
+        echo "status=success" >> $GITHUB_OUTPUT
+        
+        # 查找生成的固件文件
+        SOURCE_DIR="openwrt-${{ matrix.device }}"
+        echo "查找固件文件在: $SOURCE_DIR/bin/targets/"
+        FIRMWARE_PATH=$(find "$SOURCE_DIR/bin/targets/" -type f \( -name "*.bin" -o -name "*.img" -o -name "*.gz" \) 2>/dev/null | head -20)
+        echo "找到以下固件文件:"
+        echo "$FIRMWARE_PATH"
+        
+        # 验证是否找到固件
+        if [ -z "$FIRMWARE_PATH" ]; then
+          echo "✗ 错误: 未找到任何固件文件"
+          echo "检查所有目标目录:"
+          find "$SOURCE_DIR/bin/targets/" -type f \( -name "*.bin" -o -name "*.img" -o -name "*.gz" \) | head -20
+          exit 1
+        fi
+        
+        # 保存固件路径
+        echo "FIRMWARE_PATH<<EOF" >> $GITHUB_ENV
+        echo "$FIRMWARE_PATH" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
-    - name: Upload Artifacts for ${{ matrix.device }}
+    - name: 启用SSH调试 (可选)
+      uses: mxschmitt/action-tmate@v3
+      if: ${{ github.event.inputs.ssh == 'true' }}
+      with:
+        limit-access-to-actor: true
+
+    - name: 整理固件文件
+      if: steps.compile.outputs.status == 'success'
+      run: |
+        SOURCE_DIR="openwrt-${{ matrix.device }}"
+        # 创建固件输出目录
+        mkdir -p "$GITHUB_WORKSPACE/firmware/${{ matrix.device }}"
+        
+        # 复制固件文件
+        echo "从 $SOURCE_DIR/bin/targets/ 复制固件文件..."
+        find "$SOURCE_DIR/bin/targets/" -type f \( -name "*sysupgrade*.bin" -o -name "*factory*.bin" -o -name "*.img.gz" \) -exec cp {} "$GITHUB_WORKSPACE/firmware/${{ matrix.device }}/" \;
+        
+        # 复制构建信息
+        echo "设备: ${{ matrix.device }}" > "$GITHUB_WORKSPACE/firmware/${{ matrix.device }}/buildinfo.txt"
+        echo "编译时间: $(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_WORKSPACE/firmware/${{ matrix.device }}/buildinfo.txt"
+        
+        # 显示整理后的文件
+        echo "整理后的固件文件:"
+        ls -lh "$GITHUB_WORKSPACE/firmware/${{ matrix.device }}/"
+
+    - name: 上传固件到Artifacts
+      if: steps.compile.outputs.status == 'success'
       uses: actions/upload-artifact@v4
       with:
-        name: libwrt-firmware-${{ matrix.device }}
-        path: openwrt-${{ matrix.device }}/bin/targets/
+        name: libwrt-firmware-${{ matrix.device }}-${{ github.run_number }}
+        path: |
+          firmware/${{ matrix.device }}/*
+        if-no-files-found: error
+
+    - name: 整理发布文件
+      if: steps.compile.outputs.status == 'success'
+      run: |
+        # 创建发布目录
+        mkdir -p release
+        
+        # 移动固件到发布目录
+        cp -r "$GITHUB_WORKSPACE/firmware/${{ matrix.device }}/*" release/
+        
+        # 创建发布说明
+        cat > release/release_notes.txt << 'EOF'
+        LibWrt 自动编译固件
+        ===================
+        
+        编译时间: $(date '+%Y-%m-%d %H:%M:%S')
+        源码仓库: LiBwrt/openwrt-6.x
+        插件仓库: kenzok8/openwrt-packages
+        插件依赖: kenzok8/small
+        
+        支持的设备:
+        - ${{ matrix.device }}
+        
+        默认包含功能:
+        - WiFi无线功能
+        - 常用网络插件
+        - 第三方插件包
+        
+        固件说明:
+        - factory.bin:  factory固件，用于首次刷机
+        - sysupgrade.bin: 升级固件，用于系统升级
+        
+        刷机说明:
+        1. 首次刷机请使用 factory 固件
+        2. 系统升级请使用 sysupgrade 固件
+        3. 刷机前请备份配置
+        4. 刷机有风险，请谨慎操作
+        
+        EOF
+        
+        # 显示发布文件
+        echo "发布文件列表:"
+        ls -lh release/
+
+    - name: 创建GitHub Release
+      if: steps.compile.outputs.status == 'success'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ env.RELEASE_TAG }}
+        name: ${{ env.RELEASE_NAME }}
+        body: |
+          ## LibWrt 自动编译固件
+          
+          ### 编译信息
+          - **编译时间**: ${{ github.event.repository.updated_at }}
+          - **源码仓库**: [LiBwrt/openwrt-6.x](https://github.com/LiBwrt/openwrt-6.x)
+          - **插件仓库**: [kenzok8/openwrt-packages](https://github.com/kenzok8/openwrt-packages)
+          - **插件依赖**: [kenzok8/small](https://github.com/kenzok8/small)
+
+          ### 支持的设备
+          - ${{ matrix.device }}
+          
+          ### 默认功能
+          - ✅ WiFi无线功能
+          - ✅ 常用网络插件
+          - ✅ 第三方插件包
+          
+          ### 固件说明
+          | 文件类型 | 用途 |
+          |---------|------|
+          | `*factory.bin` | 首次刷机使用 |
+          | `*sysupgrade.bin` | 系统升级使用 |
+          
+          ### 刷机提示
+          1. ⚠️ 首次刷机请使用 factory 固件
+          2. 🔄 系统升级请使用 sysupgrade 固件
+          3. 💾 刷机前请备份重要配置
+          4. ⚡ 刷机过程中请勿断电
+          
+          ### 注意事项
+          - 本固件为自动编译生成，仅供测试使用
+          - 刷机有风险，请谨慎操作
+          - 使用前请仔细阅读相关文档
+        files: |
+          release/*
+        fail_on_unmatched_files: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
