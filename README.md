@@ -1,31 +1,42 @@
-# LibWrt-IPQ60XX-360V6
+# OpenWRT-CI
 
-## 项目简介
+官方版：
 
-这是一个为 IPQ60XX 芯片和 360V6 路由器定制的 LibWrt 构建项目。
+https://github.com/immortalwrt/immortalwrt.git
 
-## 支持的设备
+高通版：
 
-- 360V6
-- 其他 IPQ60XX 芯片设备
+https://github.com/VIKINGYFY/immortalwrt.git
 
-## 构建步骤
+# U-BOOT
 
-1. 克隆本仓库
-2. 运行构建脚本：`./build.sh`（脚本会自动克隆 LibWrt 源码）
+高通版：
 
-## 项目结构
+https://github.com/chenxin527/uboot-ipq60xx-emmc-build
 
-- `.github/workflows/` - GitHub Actions 工作流配置
-- `Scripts/` - 自定义脚本
-- `wrt_core/` - 核心配置和补丁
-- `build.sh` - 主构建脚本
-- `feeds.conf.default` - OpenWrt feeds 配置
+https://github.com/chenxin527/uboot-ipq60xx-nand-build
 
-## 作者
+https://github.com/chenxin527/uboot-ipq60xx-nor-build
 
-- 作者：李杰
+联发科版：
 
-## 许可证
+https://drive.wrt.moe/uboot/mediatek
 
-本项目采用 MIT 许可证。
+# 固件简要说明
+
+固件每天早上4点自动编译。
+
+固件信息里的时间为编译开始的时间，方便核对上游源码提交时间。
+
+MEDIATEK系列、QUALCOMMAX系列、ROCKCHIP系列、X86系列。
+
+# 目录简要说明
+
+workflows——自定义CI配置
+
+Scripts——自定义脚本
+
+Config——自定义配置
+
+#
+[![Stargazers over time](https://starchart.cc/VIKINGYFY/OpenWRT-CI.svg?variant=adaptive)](https://starchart.cc/VIKINGYFY/OpenWRT-CI)
