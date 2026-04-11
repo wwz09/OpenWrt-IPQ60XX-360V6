@@ -42,12 +42,6 @@ jobs:
 
     - name: 同步文件
       run: |
-        # 同步工作流文件
-        echo "同步工作流文件..."
-        if [ -d "$SYNC_DIR/.github/workflows" ]; then
-          cp -r "$SYNC_DIR/.github/workflows"/* ".github/workflows/"
-        fi
-        
         # 同步脚本文件
         echo "同步脚本文件..."
         if [ -d "$SYNC_DIR/scripts" ]; then
@@ -60,6 +54,13 @@ jobs:
         if [ -d "$SYNC_DIR/configs" ]; then
           mkdir -p "wrt_core/configs_sync"
           cp -r "$SYNC_DIR/configs"/* "wrt_core/configs_sync/"
+        fi
+        
+        # 同步其他有用的文件
+        echo "同步其他文件..."
+        if [ -d "$SYNC_DIR/docs" ]; then
+          mkdir -p "docs/sync"
+          cp -r "$SYNC_DIR/docs"/* "docs/sync/"
         fi
 
     - name: 清理临时目录
